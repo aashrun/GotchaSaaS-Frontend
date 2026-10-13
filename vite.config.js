@@ -11,7 +11,9 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 7011,
     strictPort: true,
-    proxy: { '/v1': { target: 'http://127.0.0.1:7012', changeOrigin: true } },
+    proxy: {
+      '/v1': { target: process.env.DEV_API_TARGET || 'http://127.0.0.1:7012', changeOrigin: true },
+    },
   },
   build: { chunkSizeWarningLimit: 800 },
 });

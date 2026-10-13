@@ -5,7 +5,7 @@ module.exports = defineConfig({
   fullyParallel: false,
   workers: 1,
   use: {
-    baseURL: 'http://localhost:7011',
+    baseURL: process.env.E2E_APP_ORIGIN || 'http://localhost:7011',
     headless: true,
     channel: 'chrome',
     viewport: { width: 1440, height: 1000 },

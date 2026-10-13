@@ -60,8 +60,6 @@ export default function Studio() {
     { user, refresh } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const startupHandled = useRef(false);
-  const [startupIssue, setStartupIssue] = useState('');
-  const [startupLink, setStartupLink] = useState('/integrations');
   const { data, error, loading, reload } = useData('/projects/' + id),
     { data: models } = useData('/ai/models'),
     { data: config } = useData('/config');
@@ -103,6 +101,7 @@ export default function Studio() {
     }
   });
   const [referenceBusy, setReferenceBusy] = useState(false);
+  const [verificationBusy, setVerificationBusy] = useState(false);
   useEffect(() => {
     if (references.length)
       sessionStorage.setItem('gotcha-references:' + id, JSON.stringify(references));
@@ -114,6 +113,9 @@ export default function Studio() {
     active = data?.jobs.find((j) => !['completed', 'failed', 'cancelled'].includes(j.state));
   const canEdit = data && ['owner', 'admin', 'editor'].includes(data.role),
     dirty = current && drafts[selected] !== undefined && drafts[selected] !== current.content;
+  const modelReady = models?.models.some((model) => model.configured);
+  const sandboxReady = config?.providers.find((provider) => provider.id === 'e2b')?.configured;
+  const hasBuild = data?.jobs.some((job) => job.state === 'completed');
   useEffect(() => {
     if (models?.models.length && !modelId)
       setModelId(
@@ -131,18 +133,14 @@ export default function Studio() {
     const next = new URLSearchParams(searchParams);
     next.delete('build');
     setSearchParams(next, { replace: true });
-    if (!models.models.some((model) => model.configured))
-      setStartupIssue(
-        'Your idea is saved. Connect an AI model in Integrations to start the build.',
-      );
-    else if (!user.emailVerified) {
-      setStartupLink('/settings');
-      setStartupIssue('Your idea is saved. Verify your email in Settings before the first build.');
-    } else if (!config.providers.find((provider) => provider.id === 'e2b')?.configured)
-      setStartupIssue(
-        'Your idea is saved. The build environment needs to be connected before generation.',
-      );
-    else if (!active && intent?.trim()) estimateJob(undefined, intent);
+    if (
+      models.models.some((model) => model.configured) &&
+      user.emailVerified &&
+      config.providers.find((provider) => provider.id === 'e2b')?.configured &&
+      !active &&
+      intent?.trim()
+    )
+      estimateJob(undefined, intent);
   }, [p?.id, models, config, modelId, searchParams]);
   useEffect(() => {
     if (p?.template)
@@ -296,7 +294,6 @@ export default function Studio() {
       });
       setEstimate(null);
       sessionStorage.removeItem('nebula-studio-prompt:' + id);
-      setStartupIssue('');
       setPrompt('');
       setReferences([]);
       await reload();
@@ -457,27 +454,97 @@ export default function Studio() {
                 <span className="agent-orb">
                   <Orbit size={25} />
                 </span>
-                <h2>Let’s build your project.</h2>
+                <h2>{hasBuild ? 'What should we ship next?' : 'Your idea is saved.'}</h2>
                 <p>
-                  Your idea and every change stay in this conversation. The preview updates after a
-                  verified build.
+                  {hasBuild
+                    ? 'Tell me what to change below. Your verified preview stays beside this conversation.'
+                    : 'This is your project workspace: chat on the left, your app on the right. Review the credits, then approve to start building.'}
                 </p>
               </div>
+              {!active && !hasBuild && (
+                <section className="studio-next-step" aria-label="Next step">
+                  <span className="eyebrow">
+                    {!user.emailVerified ? 'ONE QUICK CHECK' : 'READY WHEN YOU ARE'}
+                  </span>
+                  <h3>
+                    {!user.emailVerified
+                      ? 'Verify your email to start.'
+                      : !modelReady || !sandboxReady
+                        ? 'Connect your build tools.'
+                        : 'Let’s build the first version.'}
+                  </h3>
+                  <p>
+                    {!user.emailVerified
+                      ? `Send a verification link to ${user.email}. Open it, then check your status here.`
+                      : !modelReady || !sandboxReady
+                        ? 'Your idea is safe. The platform needs an AI model and build environment before it can run.'
+                        : 'The arrow below opens a credit estimate. Approve it to begin; the preview updates when the build passes its checks.'}
+                  </p>
+                  {!user.emailVerified ? (
+                    <div className="studio-next-actions">
+                      <button
+                        type="button"
+                        className="small-primary"
+                        disabled={verificationBusy}
+                        onClick={async () => {
+                          setVerificationBusy(true);
+                          try {
+                            const { data } = await api.post('/auth/resend-verification');
+                            toast.success(
+                              data.delivery === 'local'
+                                ? 'Verification link is in your development mailbox'
+                                : 'Verification email sent. Check your inbox and spam folder.',
+                            );
+                          } catch (e) {
+                            toast.error(e.message);
+                          } finally {
+                            setVerificationBusy(false);
+                          }
+                        }}
+                      >
+                        {verificationBusy ? 'Sending…' : 'Send verification email'}
+                      </button>
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={async () => {
+                          try {
+                            await refresh();
+                          } catch (e) {
+                            toast.error(e.message);
+                          }
+                        }}
+                      >
+                        I’ve verified — check status
+                      </button>
+                      {config?.mailMode === 'local' && (
+                        <Link to="/settings">Open development mailbox</Link>
+                      )}
+                    </div>
+                  ) : !modelReady || !sandboxReady ? (
+                    <Link className="text-link" to="/integrations">
+                      Open Connectors <ArrowUpRight size={14} />
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      className="small-primary"
+                      disabled={
+                        busy || voiceBusy || referenceBusy || !canEdit || prompt.trim().length < 5
+                      }
+                      onClick={() => estimateJob()}
+                    >
+                      Review credits & build <ArrowUp size={15} />
+                    </button>
+                  )}
+                </section>
+              )}
               {data.messages.map((m) => (
                 <article className={'chat-message ' + m.role} key={m.id}>
                   <span>{m.role === 'user' ? 'YOU' : 'GOTCHA!'}</span>
                   <p>{m.content}</p>
                 </article>
               ))}
-              {startupIssue && (
-                <div className="studio-startup-note" role="status">
-                  <p>{startupIssue}</p>
-                  <Link to={startupLink}>
-                    Open setup
-                    <ArrowUpRight size={13} />
-                  </Link>
-                </div>
-              )}
               {active && (
                 <div className="agent-progress">
                   <div>
@@ -635,7 +702,7 @@ export default function Studio() {
               )}
               <span>
                 <span className="status-dot" />
-                {preview ? 'Built preview' : 'Template preview'}
+                {preview ? 'Built preview' : 'Starter preview · not built yet'}
               </span>
             </div>
             <div className="device-toggle">

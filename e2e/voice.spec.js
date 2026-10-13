@@ -85,7 +85,10 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   expect(errors).toEqual([]);
   const me = await (await page.request.get('/v1/auth/me')).json();
   const deleted = await page.request.delete('/v1/auth/account', {
-    headers: { origin: 'http://localhost:7011', 'x-csrf-token': me.csrfToken },
+    headers: {
+      origin: process.env.E2E_APP_ORIGIN || 'http://localhost:7011',
+      'x-csrf-token': me.csrfToken,
+    },
     data: { confirmation: 'DELETE MY ACCOUNT' },
   });
   expect(deleted.ok()).toBe(true);

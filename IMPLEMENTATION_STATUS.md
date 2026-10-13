@@ -18,8 +18,8 @@ Updated 13 October 2026. The local integration workspace runs React/Vite on port
 
 | Check                                       | Result                                                                                       |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Backend unit/PostgreSQL/security tests      | 61 passed, zero failures                                                                     |
-| Browser workflows                           | 9 passed, zero failures                                                                      |
+| Backend unit/PostgreSQL/security tests      | 64 passed, zero failures                                                                     |
+| Browser workflows                           | 10 passed, zero failures                                                                     |
 | Syntax and production build                 | Passed                                                                                       |
 | npm production and sandbox dependency audit | Zero vulnerabilities reported                                                                |
 | Migrations 006–008 down/up                  | Existing source preserved on isolated migration DB                                           |

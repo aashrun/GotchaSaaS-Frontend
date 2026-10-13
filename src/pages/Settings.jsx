@@ -25,6 +25,7 @@ export default function SettingsPage() {
     [password, setPassword] = useState(''),
     [current, setCurrent] = useState(''),
     [mail, setMail] = useState(null),
+    [mailBusy, setMailBusy] = useState(false),
     [confirm, setConfirm] = useState(false),
     [confirmation, setConfirmation] = useState('');
   const { data: configuration } = useData('/config');
@@ -85,16 +86,37 @@ export default function SettingsPage() {
             <p>Verify your email before AI generation, team changes, or paid resource creation.</p>
             <button
               className="text-link"
+              disabled={mailBusy}
+              onClick={async () => {
+                setMailBusy(true);
+                try {
+                  const { data } = await api.post('/auth/resend-verification');
+                  toast.success(
+                    data.delivery === 'local'
+                      ? 'Link created in your development mailbox'
+                      : 'Verification email sent. Check your inbox and spam folder.',
+                  );
+                } catch (e) {
+                  toast.error(e.message);
+                } finally {
+                  setMailBusy(false);
+                }
+              }}
+            >
+              {mailBusy ? 'Sending…' : 'Resend verification'}
+            </button>
+            <button
+              className="text-button"
               onClick={async () => {
                 try {
-                  await api.post('/auth/resend-verification');
-                  toast.success('Verification message created');
+                  await refresh();
+                  toast.info('Verification status refreshed');
                 } catch (e) {
                   toast.error(e.message);
                 }
               }}
             >
-              Resend verification
+              Check status
             </button>
           </div>
         )}

@@ -2111,3 +2111,195 @@ summary:focus-visible {
     right: 12px;
   }
 }
+
+/* Borderless glass across every workspace page, with one compact Manage scale. */
+:root {
+  --glass: rgba(8, 8, 8, 0.75);
+}
+[data-theme='light'] {
+  --glass: rgba(255, 255, 255, 0.76);
+}
+.workspace-main,
+.workspace-main .earth-backdrop {
+  border: 0 !important;
+  outline: 0;
+  box-shadow: none;
+}
+/* Clip the photo and its veil together so curved edges cannot form a thin halo. */
+.workspace-main {
+  overflow: visible;
+  clip-path: inset(0 round 24px);
+}
+.workspace-main::before,
+.workspace-main::after {
+  content: none;
+}
+.workspace-scroll,
+.sidebar-scroll,
+.table-wrap,
+.conversation,
+.tool-content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.workspace-scroll::-webkit-scrollbar,
+.sidebar-scroll::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar,
+.conversation::-webkit-scrollbar,
+.tool-content::-webkit-scrollbar {
+  display: none;
+}
+.project-composer,
+.studio-composer,
+.workspace-layout
+  :is(
+    .panel,
+    .notice,
+    .info-card,
+    .integration-card,
+    .template-card,
+    .library-project,
+    .empty-state,
+    .connector-plan-grid article
+  ) {
+  border: 0;
+  background: var(--glass);
+  backdrop-filter: blur(24px) saturate(115%);
+  -webkit-backdrop-filter: blur(24px) saturate(115%);
+  box-shadow: 0 12px 36px #0000000f;
+}
+.workspace-layout
+  :is(
+    .panel,
+    .notice,
+    .info-card,
+    .integration-card,
+    .template-card,
+    .connector-plan-grid article
+  ) {
+  border-radius: 22px;
+}
+.earth-subdued .earth-veil {
+  background: linear-gradient(180deg, #000000d9, #000000a8 55%, #000000c9);
+}
+[data-theme='light'] .earth-subdued .earth-veil {
+  background: linear-gradient(180deg, #ffffffd9, #ffffffa8 55%, #ffffffc9);
+}
+.workspace-secondary .page-content {
+  width: 100%;
+  max-width: 1000px;
+  padding: 36px 42px 60px;
+}
+.workspace-secondary .page-header {
+  margin-bottom: 28px;
+}
+.workspace-secondary .page-header h1 {
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.8px;
+}
+.workspace-secondary .panel {
+  padding: 24px;
+  margin-bottom: 18px;
+}
+.workspace-secondary .panel h3 {
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+.workspace-secondary .billing-summary {
+  gap: 18px;
+}
+.workspace-secondary .billing-summary h2 {
+  font-size: 28px;
+  margin: 12px 0;
+  gap: 12px;
+}
+.workspace-secondary .billing-summary h2 svg {
+  width: 20px;
+}
+.workspace-secondary .spending-panel {
+  flex-wrap: wrap;
+}
+.workspace-secondary .spending-panel form {
+  flex: 0 0 100%;
+  padding-left: 40px;
+}
+.workspace-secondary .form-stack:not(.panel) {
+  max-width: 570px;
+}
+.workspace-secondary .panel.form-stack > label {
+  max-width: 570px;
+}
+.workspace-layout
+  :is(
+    input,
+    select,
+    .secondary-button,
+    .danger-button,
+    .capability-badge,
+    .user-avatar,
+    .session-row,
+    .member-row,
+    .verification-notice,
+    th,
+    td
+  ) {
+  border: 0;
+}
+.workspace-layout :is(input, select) {
+  background: var(--surface);
+}
+.workspace-layout :is(.session-row, .member-row) {
+  padding: 13px 0;
+}
+.workspace-secondary .verification-notice {
+  flex-wrap: wrap;
+}
+.studio-next-step {
+  padding: 18px;
+  margin: 20px 0;
+  border-radius: 20px;
+  background: var(--surface);
+}
+.studio-next-step h3 {
+  font-size: 16px;
+  line-height: 1.3;
+  margin: 9px 0;
+}
+.studio-next-step p {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.studio-next-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.studio-next-actions a {
+  font-size: 11px;
+  color: var(--muted);
+}
+.studio-next-step .small-primary {
+  padding: 10px 14px;
+  font-size: 11px;
+  border-radius: 20px;
+}
+@media (max-width: 760px) {
+  .workspace-main {
+    clip-path: inset(0 round 20px);
+  }
+  .workspace-secondary .page-content {
+    padding: 76px 20px 40px;
+  }
+  .workspace-secondary .page-header h1 {
+    font-size: 27px;
+  }
+  .workspace-secondary .panel {
+    padding: 20px;
+  }
+  .workspace-secondary .spending-panel form {
+    padding-left: 0;
+  }
+}

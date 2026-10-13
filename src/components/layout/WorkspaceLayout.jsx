@@ -149,7 +149,7 @@ export default function WorkspaceLayout() {
     <div
       className={
         'workspace-layout ' +
-        (overview ? 'workspace-overview ' : '') +
+        (overview ? 'workspace-overview ' : 'workspace-secondary ') +
         (collapsed ? 'sidebar-is-collapsed' : '')
       }
     >

@@ -7,6 +7,7 @@ import PlanetScene from '../components/PlanetScene';
 import { useAuth } from '../auth/AuthProvider';
 import { auth0Configured } from '../auth/Auth0Provider';
 import api from '../lib/api';
+import { toast } from 'sonner';
 import './auth.css';
 function OAuthButton() {
   const { loginWithRedirect } = useAuth0();
@@ -57,31 +58,42 @@ export default function AuthPage() {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [success, setSuccess] = useState('');
-  const verified = useRef(false);
+  const verified = useRef(null);
   const register = mode === 'register';
   useEffect(() => {
     setError('');
     setSuccess('');
   }, [mode]);
   useEffect(() => {
-    if (mode === 'verify' && !verified.current) {
-      verified.current = true;
+    const token = params.get('token');
+    if (mode === 'verify' && !token) {
+      setError('This verification link is incomplete. Request a fresh link from Settings.');
+      return;
+    }
+    if (mode === 'verify' && token && verified.current !== token) {
+      verified.current = token;
+      setError('');
+      setSuccess('');
       api
         .post('/auth/verify', { token: params.get('token') })
         .then(async () => {
           setSuccess('Your email is verified. You’re ready to build.');
-          if (user) await refresh();
+          await refresh();
         })
         .catch((e) => setError(e.message));
     }
-  }, [mode]);
+  }, [mode, params.get('token')]);
   async function submit(e) {
     e.preventDefault();
     setError('');
     setBusy(true);
     try {
       if (['login', 'register'].includes(mode)) {
-        await signIn(mode, { email, password, ...(register ? { firstName } : {}) });
+        const result = await signIn(mode, { email, password, ...(register ? { firstName } : {}) });
+        if (result.verification?.delivery === 'failed')
+          toast.error(
+            'Your account is ready, but the verification email could not be sent. Retry from Settings.',
+          );
         navigate(
           location.state?.from ||
             (sessionStorage.getItem('nebula-prompt') || sessionStorage.getItem('nebula-template')

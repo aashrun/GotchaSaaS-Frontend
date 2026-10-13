@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { randomUUID } = require('node:crypto');
+const origin = process.env.E2E_APP_ORIGIN || 'http://localhost:7011';
 test('app entry, authentication, project persistence, safe editor, checkpoints and template CRUD work', async ({
   page,
 }) => {
@@ -413,7 +414,7 @@ test('new-project intent automatically opens a credit estimate without queuing a
   const mail = await (await page.request.get('/v1/auth/local-mail')).json();
   const me = await (await page.request.get('/v1/auth/me')).json();
   await page.request.post('/v1/auth/verify', {
-    headers: { origin: 'http://localhost:7011', 'x-csrf-token': me.csrfToken },
+    headers: { origin, 'x-csrf-token': me.csrfToken },
     data: { token: new URL(mail.mail.url).searchParams.get('token') },
   });
   // These routes simulate configured infrastructure; no live provider is called.
@@ -480,7 +481,7 @@ test('sidebar collapse, pinned credits, folded Manage and top-right appearance s
   const me = await (await page.request.get('/v1/auth/me')).json();
   for (let index = 0; index < 10; index++)
     await page.request.post('/v1/folders', {
-      headers: { origin: 'http://localhost:7011', 'x-csrf-token': me.csrfToken },
+      headers: { origin, 'x-csrf-token': me.csrfToken },
       data: { name: 'Folder ' + index },
     });
   await page.reload();
@@ -614,6 +615,89 @@ test('personalized composer, attachments, project search and connector navigatio
   );
 });
 
+test('Manage pages share a compact borderless glass layout in both themes and explain the first build', async ({
+  page,
+}) => {
+  await page.goto('/auth/register');
+  await page.getByRole('textbox', { name: 'Your first name' }).fill('Glass Test');
+  await page
+    .getByRole('textbox', { name: 'Email address' })
+    .fill(`browser-glass-${randomUUID()}@nebula.test`);
+  await page.getByLabel('Password', { exact: true }).fill('A secure glass test password!1');
+  await page.getByRole('button', { name: 'Create my workspace' }).click();
+  await expect(page).toHaveURL('/projects');
+  await expect(page.locator('.project-composer')).toHaveCSS('border-top-width', '0px');
+  await expect(page.locator('.workspace-scroll')).toHaveCSS('scrollbar-width', 'none');
+  await expect(page.locator('.sidebar-scroll')).toHaveCSS('scrollbar-width', 'none');
+  await page.getByRole('button', { name: 'Manage', exact: true }).click();
+  for (const theme of ['dark', 'light']) {
+    let contentWidth;
+    for (const [label, path] of [
+      ['Settings', '/settings'],
+      ['Team members', '/team'],
+      ['Billing & usage', '/billing'],
+    ]) {
+      await page.getByRole('link', { name: label, exact: true }).click();
+      await expect(page).toHaveURL(path);
+      await expect(page.locator('.page-content')).toBeVisible();
+      await expect(page.locator('.panel').first()).toBeVisible();
+      if (path === '/team') await expect(page.locator('.member-row').first()).toBeVisible();
+      const content = await page.locator('.page-content').boundingBox();
+      if (!contentWidth) contentWidth = content.width;
+      expect(content.width).toBe(contentWidth);
+      await expect(page.locator('.workspace-main')).toHaveCSS('border-top-width', '0px');
+      const panels = page.locator('.panel');
+      await expect(panels.first()).toBeVisible();
+      for (const panel of await panels.all()) {
+        await expect(panel).toHaveCSS('border-top-width', '0px');
+        await expect(panel).toHaveCSS('padding', '24px');
+        expect(await panel.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain(
+          'blur(24px)',
+        );
+        expect(await panel.evaluate((el) => getComputedStyle(el).backgroundColor)).toContain(
+          theme === 'dark' ? '8, 8, 8, 0.75' : '255, 255, 255, 0.76',
+        );
+      }
+      await page.screenshot({
+        path: `.local/manage-${path.slice(1)}-${theme}.png`,
+        animations: 'disabled',
+      });
+      await page.locator('.workspace-scroll').evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      });
+      if (path === '/settings')
+        expect(
+          await page.locator('.workspace-scroll').evaluate((el) => el.scrollTop),
+        ).toBeGreaterThan(0);
+    }
+    if (theme === 'dark')
+      await page.getByRole('button', { name: 'Switch to light mode', exact: true }).click();
+  }
+  await page.getByRole('link', { name: 'Projects', exact: true }).click();
+  await expect(page.locator('.project-composer')).toHaveCSS('border-top-width', '0px');
+  expect(
+    await page.locator('.project-composer').evaluate((el) => getComputedStyle(el).backgroundColor),
+  ).toContain('255, 255, 255, 0.76');
+  await page.getByLabel('Describe your app idea').fill('Build a simple customer portal');
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.getByRole('region', { name: 'Next step' })).toContainText(
+    'Verify your email to start.',
+  );
+  await expect(page.getByRole('button', { name: 'Send verification email' })).toBeVisible();
+  await expect(page.getByText('Starter preview · not built yet')).toBeVisible();
+  await page.getByRole('button', { name: 'Send verification email' }).click();
+  const mail = await (await page.request.get('/v1/auth/local-mail')).json();
+  await page.request.post('/v1/auth/verify', {
+    headers: { origin },
+    data: { token: new URL(mail.mail.url).searchParams.get('token') },
+  });
+  await page.getByRole('button', { name: 'I’ve verified — check status' }).click();
+  await expect(page.getByRole('region', { name: 'Next step' })).not.toContainText(
+    'Verify your email to start.',
+  );
+  await page.screenshot({ path: '.local/studio-next-step.png', animations: 'disabled' });
+});
+
 test.afterEach(async ({ page }) => {
   const request = page.request;
   const response = await request.get('/v1/auth/me');
@@ -621,7 +705,7 @@ test.afterEach(async ({ page }) => {
   const data = await response.json();
   if (!data.user.email.startsWith('browser-') || !data.user.email.endsWith('@nebula.test')) return;
   await request.delete('/v1/auth/account', {
-    headers: { origin: 'http://localhost:7011', 'x-csrf-token': data.csrfToken },
+    headers: { origin, 'x-csrf-token': data.csrfToken },
     data: { confirmation: 'DELETE MY ACCOUNT' },
   });
 });
