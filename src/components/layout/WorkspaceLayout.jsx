@@ -20,8 +20,7 @@ import {
   FolderPlus,
   MoreHorizontal,
   MessageSquare,
-  PanelLeftClose,
-  PanelLeftOpen,
+  ChevronsLeft,
   Search,
   Clock3,
 } from 'lucide-react';
@@ -182,7 +181,14 @@ export default function WorkspaceLayout() {
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             onClick={() => setSidebarCollapsed(!collapsed)}
           >
-            {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+            <ChevronsLeft
+              size={17}
+              strokeWidth={1.75}
+              aria-hidden="true"
+              className={
+                collapsed ? 'sidebar-collapse-chevron points-right' : 'sidebar-collapse-chevron'
+              }
+            />
           </button>
           <button
             className="mobile-close icon-button"
