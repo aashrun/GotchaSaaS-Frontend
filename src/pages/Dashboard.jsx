@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useData, Modal, ErrorState, Skeleton } from '../components/Common';
 import api from '../lib/api';
+import { submitPromptOnEnter } from '../lib/promptKeyboard';
 import VoiceInput from '../components/VoiceInput';
 import PromptReferences, { ReferenceChips } from '../components/PromptReferences';
 import { useAuth } from '../auth/AuthProvider';
@@ -163,12 +164,7 @@ function ProjectHome({ library }) {
               maxLength={12000}
               value={prompt}
               onChange={(event) => setPrompt(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-                  event.preventDefault();
-                  event.currentTarget.form.requestSubmit();
-                }
-              }}
+              onKeyDown={submitPromptOnEnter}
             />
             <ReferenceChips references={references} onChange={setReferences} disabled={busy} />
             <div className="project-composer-actions">

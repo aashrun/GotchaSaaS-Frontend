@@ -1,3 +1,4 @@
+import { submitPromptOnEnter } from '../lib/promptKeyboard';
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import {
@@ -473,12 +474,7 @@ export default function ProjectChat({ id }) {
               maxLength={12000}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                  e.preventDefault();
-                  e.currentTarget.form.requestSubmit();
-                }
-              }}
+              onKeyDown={submitPromptOnEnter}
             />
             <ReferenceChips
               references={references}

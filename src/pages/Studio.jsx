@@ -1,3 +1,4 @@
+import { submitPromptOnEnter } from '../lib/promptKeyboard';
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -616,6 +617,7 @@ export default function Studio() {
                 placeholder="What should we build next?"
                 maxLength={12000}
                 disabled={!canEdit || !!active}
+                onKeyDown={submitPromptOnEnter}
               />
               <ReferenceChips
                 references={references}

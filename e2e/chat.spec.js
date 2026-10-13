@@ -186,6 +186,30 @@ test('sending an idea queues one bounded build and opens the verified mini-brows
     true,
   );
 });
+test('Enter sends home and chat prompts while Shift+Enter and IME composition preserve the draft', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(page);
+  const home = page.getByLabel('Describe your app idea');
+  await home.fill(fixture.idea);
+  await home.press('Shift+Enter');
+  await expect(home).toHaveValue(fixture.idea + '\n');
+  await home.dispatchEvent('keydown', { key: 'Enter', isComposing: true, keyCode: 229 });
+  expect(fixture.stats().submissions).toBe(0);
+  await expect(home).toHaveValue(fixture.idea + '\n');
+  await home.press('Enter');
+  await expect(page.locator('iframe')).toBeVisible();
+  await expect.poll(() => fixture.stats().submissions).toBe(1);
+  await page.getByRole('button', { name: 'Close app preview' }).click();
+  const chat = page.getByLabel('Ask Gotcha to build or edit your app');
+  await chat.fill(fixture.idea);
+  await chat.press('Shift+Enter');
+  await expect(chat).toHaveValue(fixture.idea + '\n');
+  expect(fixture.stats().submissions).toBe(1);
+  await chat.press('Enter');
+  await expect.poll(() => fixture.stats().submissions).toBe(2);
+});
 for (const blocking of [true, false])
   test(
     (blocking ? 'blocking' : 'non-blocking') +
