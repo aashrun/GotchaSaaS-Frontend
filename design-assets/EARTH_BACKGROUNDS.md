@@ -6,7 +6,7 @@ The interface uses IFB's neutral black/white surfaces and Arial. The main projec
 
 All 22 Earth entries from the user's macOS aerial wallpaper collection are represented by actual video frames at 12 seconds, resized to 1920 pixels wide. Eighteen videos were cached locally; four frames were read from Apple video URLs in the local wallpaper manifest.
 
-Runtime files: `frontend/public/earth/earth-01.jpg` through `earth-22.jpg`. `catalog.json` records each view's label, source ID and timestamp. `prepare-earth-gallery.py` reproduces extraction and preserves the sky catalog.
+Runtime files: `public/earth/earth-01.jpg` through `earth-22.jpg`. `catalog.json` records each view's label, source ID and timestamp. `prepare-earth-gallery.py` reproduces extraction and preserves the sky catalog.
 
 These are source video frames from the requested wallpaper collection. Original macOS videos and wallpaper settings were not changed. There is no live satellite feed.
 
@@ -14,9 +14,9 @@ These are source video frames from the requested wallpaper collection. Original 
 
 Two original sky images were generated with the built-in image_gen tool in generation mode, without a reference image or CLI fallback. Both images were inspected before being integrated.
 
-Saved sources: `design-assets/sky-clouds-01.png`, `design-assets/sky-clouds-02.png`.
+The unused original PNG copies were moved to Trash during cleanup. The runtime JPEGs below are retained; generation prompts remain documented.
 
-Runtime JPEGs: `frontend/public/earth/sky-clouds-01.jpg`, `sky-clouds-02.jpg`.
+Runtime JPEGs: `public/earth/sky-clouds-01.jpg`, `sky-clouds-02.jpg`.
 
 Exact generation prompts:
 

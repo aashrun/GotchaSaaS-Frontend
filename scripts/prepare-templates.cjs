@@ -2,7 +2,7 @@ const fs = require('node:fs'),
   path = require('node:path'),
   { execFileSync } = require('node:child_process');
 const frontend = path.resolve(__dirname, '..');
-const integratedTemplates = path.resolve(frontend, '../backend/Templates');
+const integratedTemplates = path.resolve(frontend, '../GotchaSaaS-Backend/Templates');
 const { templates, templateFiles } = require(
   fs.existsSync(integratedTemplates) ? integratedTemplates : path.join(frontend, 'templates'),
 );

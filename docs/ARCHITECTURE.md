@@ -2,17 +2,17 @@
 
 ## Audited boilerplate
 
-Source `/Users/aashrungautam/Desktop/BoilerPlate/{BoilerplateBE,BoilerplateFE}`. Copied source into `backend/` and `frontend/`, excluding secrets, node_modules, build artifacts, and Git metadata. Existing UI primitives, React Router, Vite/Tailwind configuration, Express conventions, and optional Auth0 integration were reused.
+Source `/Users/aashrungautam/Desktop/BoilerPlate/{BoilerplateBE,BoilerplateFE}`. Copied source into `GotchaSaaS-Backend/` and `GotchaSaaS-Frontend/`, excluding secrets, node_modules, build artifacts, and Git metadata. Existing UI primitives, React Router, Vite/Tailwind configuration, Express conventions, and optional Auth0 integration were reused.
 
 The supplied backend connected to MongoDB and used Mongoose, although Sequelize was listed. Its frontend imported a missing Analytics file, used conflicting `/` routes, and bypassed all ProtectedRoute checks. Auth0 environment settings were required at module import even when unavailable. There were no migrations, organization permissions, or tests. The conversion to PostgreSQL is a documented necessary correction to meet the user's explicit stack requirement, not a framework replacement.
 
 ## Boundaries
 
-- `frontend/src/pages`: route experiences. `components/ui`: retained shadcn-style primitives. Theme/auth contexts and same-origin API client.
-- `backend/Routes`: validated HTTP boundaries. `Auth`: cookie/CSRF/project/admin enforcement, optional verified Auth0 exchange. `Controllers`: retained user convention.
-- `backend/Services`: projects, authentication/mail, credit accounting, durable jobs, resource operations, billing.
-- `backend/Providers`: E2B, Neon, Supabase, Cloudflare, and a timeout-bound HTTP helper. AI provider adapters use official server SDKs.
-- `backend/Models`: Sequelize control-plane records. `Migrations`: frozen initial schema plus explicit incremental changes; no `sync()`.
+- `GotchaSaaS-Frontend/src/pages`: route experiences. `components/ui`: retained shadcn-style primitives. Theme/auth contexts and same-origin API client.
+- `GotchaSaaS-Backend/Routes`: validated HTTP boundaries. `Auth`: cookie/CSRF/project/admin enforcement, optional verified Auth0 exchange. `Controllers`: retained user convention.
+- `GotchaSaaS-Backend/Services`: projects, authentication/mail, credit accounting, durable jobs, resource operations, billing.
+- `GotchaSaaS-Backend/Providers`: E2B, Neon, Supabase, Cloudflare, and a timeout-bound HTTP helper. AI provider adapters use official server SDKs.
+- `GotchaSaaS-Backend/Models`: Sequelize control-plane records. `Migrations`: frozen initial schema plus explicit incremental changes; no `sync()`.
 - E2B is the only application runtime. Its template contains fixed dependencies. Internet egress is denied, provider secrets are not injected, and only platform-owned validation commands are accepted.
 - Browser previews use compiled HTML in a sandboxed opaque-origin iframe. Scripts and React form handlers work; same-origin access, parent navigation, and external networking/submissions are prohibited.
 - Curated template previews are built locally from repository-owned source only. The template preparation script cannot accept tenant/project code.

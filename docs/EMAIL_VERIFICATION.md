@@ -1,6 +1,6 @@
 # Email verification
 
-The operator's local backend now uses Resend rather than the development mailbox. Credentials remain only in ignored `backend/.env`. The Gotcha! email includes a one-use verification link expiring in 24 hours; reset links expire in 30 minutes. Resend requests use a token-bound idempotency key. Delivery failures do not strand a newly registered account: the session still opens, the user stays unverified, and Settings/the studio offer a retry. The verification page refreshes the session state after consuming the link.
+The operator's local backend now uses Resend rather than the development mailbox. Credentials remain only in ignored `GotchaSaaS-Backend/.env`. The Gotcha! email includes a one-use verification link expiring in 24 hours; reset links expire in 30 minutes. Resend requests use a token-bound idempotency key. Delivery failures do not strand a newly registered account: the session still opens, the user stays unverified, and Settings/the studio offer a retry. The verification page refreshes the session state after consuming the link.
 
 For a new backend deployment, set these environment values using a verified sending domain:
 
@@ -22,4 +22,4 @@ APP_ORIGIN=https://your-builder-domain.example
 
 ## Isolated browser testing
 
-Use a separate local API with `MAIL_MODE=local`, `RUN_WORKER=false`, paid providers disabled, and the dedicated `nebula_studio_e2e_test` database. Point it at `APP_ORIGIN=http://localhost:7013` and `NEBULA_PORT=7014`. Run the frontend with `DEV_API_TARGET=http://127.0.0.1:7014 npm run dev -w frontend -- --port 7013`, then run `E2E_APP_ORIGIN=http://localhost:7013 npm run test:e2e`. Synthetic browser tests must not use the operator's live email delivery. The actual user app keeps ports 7011/7012.
+Use a separate local API with `MAIL_MODE=local`, `RUN_WORKER=false`, paid providers disabled, and the dedicated `nebula_studio_e2e_test` database. Point it at `APP_ORIGIN=http://localhost:7013` and `NEBULA_PORT=7014`. Run the frontend with `DEV_API_TARGET=http://127.0.0.1:7014 npm run dev -w GotchaSaaS-Frontend -- --port 7013`, then run `E2E_APP_ORIGIN=http://localhost:7013 npm run test:e2e`. Synthetic browser tests must not use the operator's live email delivery. The actual user app keeps ports 7011/7012.

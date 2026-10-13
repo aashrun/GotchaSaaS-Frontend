@@ -8,7 +8,7 @@ Initial attempts revealed unnecessary intake questions despite explicit scope an
 
 The detailed attempts, costs, final functional outcomes, exported source and screenshots are retained under ignored `.local/deliverables/software-suite/`. Results establish only recorded behaviour and supported scope. A session-only board is not persistent multi-user software; a password generator is not independently certified cryptographic software; a sandbox notes database is not a durable deployed database. No result is a production security certification. Broader reliability, input-edge coverage, accessibility, browser compatibility and security review remain necessary.
 
-See [model selection and Jev assessment](MODEL_ROUTING.md). Jev remains an evaluated proposal, not a live routing dependency. The routing change enforces GPT for ordinary web frontend work, plan-bound backend/architecture models and a separate allowance for Claude on 3D tasks. Main development servers remain on 7011/7012.
+See [model selection and Jev assessment](MODEL_ROUTING.md). Jev remains an evaluated proposal, not a live routing dependency. The routing change enforces GPT for ordinary web frontend work, plan-bound GotchaSaaS-Backend/architecture models and a separate allowance for Claude on 3D tasks. Main development servers remain on 7011/7012.
 
 ## Final outcomes
 

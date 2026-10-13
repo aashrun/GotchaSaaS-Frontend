@@ -1,6 +1,6 @@
 # Agent implementation
 
-The default builder now uses the `agent-v1` loop under `backend/Agent/`. The prior structured change-set builder remains available for old jobs and regression coverage. It is no longer the default Studio experience.
+The default builder now uses the `agent-v1` loop under `GotchaSaaS-Backend/Agent/`. The prior structured change-set builder remains available for old jobs and regression coverage. It is no longer the default Studio experience.
 
 A user prompt is authenticated and estimated; the user accepts its maximum credit reservation. The API snapshots server-side role routing and source revision, persists the initial message once, and queues a job. The worker checks actor/project permissions again, saves source history, starts or resumes a private E2B workspace, and invokes OpenRouter Responses function tools.
 

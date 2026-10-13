@@ -6,7 +6,7 @@ import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 AERIALS = Path.home() / 'Library/Application Support/com.apple.wallpaper/aerials'
-OUTPUT = ROOT / 'frontend/public/earth'
+OUTPUT = ROOT / 'public/earth'
 OUTPUT.mkdir(parents=True, exist_ok=True)
 manifest = json.loads((AERIALS / 'manifest/entries.json').read_text())
 assets = [item for item in manifest['assets'] if '55B7C95D-CEAF-4FD8-ADEF-F5BC657D8F6D' in item['categories']]

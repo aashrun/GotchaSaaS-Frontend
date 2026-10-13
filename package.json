@@ -9,8 +9,8 @@
     "build": "npm run prepare:templates && vite build",
     "prepare:templates": "node scripts/prepare-templates.cjs",
     "preview": "vite preview",
-    "format:check": "prettier --check .",
-    "test:e2e": "playwright test --config=playwright.config.cjs"
+    "test:e2e": "playwright test --config=playwright.config.cjs",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.17.0",
