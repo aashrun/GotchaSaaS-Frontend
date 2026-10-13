@@ -13,3 +13,7 @@ An interrupted worker leaves a paused job. The requester can resume a safe check
 The supported dependencies/runtime are curated. Arbitrary system commands, unrestricted internet, arbitrary package installs, unsupported backend stacks, every external connector and production hosting are not supplied by this loop. Its capabilities expand through reviewed typed adapters.
 
 See [routing, budgets and cloud operation](HARNESS_STRATEGY.md), [security boundaries](SECURITY.md), [voice dictation](VOICE_INPUT.md), and [project structure](PROJECT_STRUCTURE.md).
+
+## Conversation and clarification
+
+`report_progress` supplies short user-facing summaries; tool execution emits actual file/research/validation activity. These are progress reports, not hidden model reasoning. `ask_user` persists a requester-scoped question. Blocking questions fence the rest of a tool batch, complete function outputs, checkpoint and pause E2B before exposing a resumable state. A non-blocking question declares deferred source paths; other edits may proceed, but finishing waits for outstanding answers. Answers are supplied explicitly to the resumed model context. Unknown interrupted provider/tool outcomes remain non-resumable. `POST /projects/:id/messages` saves typed prompts idempotently before infrastructure checks or credit reservation.

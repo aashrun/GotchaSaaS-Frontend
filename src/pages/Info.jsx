@@ -4,8 +4,8 @@ import { Orbit, ArrowUpRight, ShieldCheck } from 'lucide-react';
 const content = {
   help: [
     'Your next step, a little clearer.',
-    'Create a project, inspect its files, and save checkpoints. To run AI generation, configure an allowed model and an E2B template in the backend, verify your email, then approve the studio’s credit estimate.',
-    'Export your source anytime from the studio. Failed builds preserve the previous code. Every build report separates passed checks from checks that were not run.',
+    'Describe your idea on New Project. It becomes a chat and starts building within your available credits. Verify your email first; the app will explain any missing setup in the conversation.',
+    'Watch progress and answer questions in chat. A preview opens beside it when the build is ready. Project tools holds your code, checkpoints, export and optional GitHub connection. Failed builds preserve the previous source.',
     'Provider setup, deployment, tests, security boundaries, and the implementation checklist are documented in the repository README, INTEGRATIONS.md, DEPLOYMENT.md, and IMPLEMENTATION_STATUS.md.',
   ],
   analytics: [

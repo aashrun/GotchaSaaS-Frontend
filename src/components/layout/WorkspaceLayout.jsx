@@ -59,7 +59,9 @@ export default function WorkspaceLayout() {
     [searchLoading, setSearchLoading] = useState(false),
     [searchError, setSearchError] = useState('');
   const [themeBusy, setThemeBusy] = useState(false);
-  const overview = ['/dashboard', '/projects'].includes(location.pathname);
+  const chat =
+    location.pathname === '/projects' && new URLSearchParams(location.search).has('chat');
+  const overview = ['/dashboard', '/projects'].includes(location.pathname) && !chat;
   const [folderDialog, setFolderDialog] = useState(null),
     [folderName, setFolderName] = useState(''),
     [folderBusy, setFolderBusy] = useState(false),
@@ -149,7 +151,7 @@ export default function WorkspaceLayout() {
     <div
       className={
         'workspace-layout ' +
-        (overview ? 'workspace-overview ' : 'workspace-secondary ') +
+        (chat ? 'workspace-chat ' : overview ? 'workspace-overview ' : 'workspace-secondary ') +
         (collapsed ? 'sidebar-is-collapsed' : '')
       }
     >
@@ -191,7 +193,12 @@ export default function WorkspaceLayout() {
             aria-label="New project"
             title="New project"
             onClick={() => {
-              navigate('/projects?new=true');
+              navigate(
+                '/projects?new=true' +
+                  (new URLSearchParams(location.search).get('folderId')
+                    ? '&folderId=' + new URLSearchParams(location.search).get('folderId')
+                    : ''),
+              );
               setOpen(false);
             }}
           >
@@ -219,7 +226,7 @@ export default function WorkspaceLayout() {
               <span className="nav-label">Connectors</span>
             </NavLink>
             <NavLink
-              to="/projects"
+              to="/library"
               aria-label="Projects"
               title="Projects"
               aria-current={new URLSearchParams(location.search).get('folderId') ? false : 'page'}
@@ -266,7 +273,7 @@ export default function WorkspaceLayout() {
               {folders.map((folder) => (
                 <div className="folder-nav-row" key={folder.id}>
                   <Link
-                    to={'/projects?folderId=' + folder.id}
+                    to={'/library?folderId=' + folder.id}
                     aria-current={
                       new URLSearchParams(location.search).get('folderId') === folder.id
                         ? 'page'
@@ -343,7 +350,7 @@ export default function WorkspaceLayout() {
                 {projectData?.projects.slice(0, 5).map((project) => (
                   <Link
                     key={project.id}
-                    to={'/studio/' + project.id}
+                    to={'/projects?chat=' + project.id}
                     onClick={() => setOpen(false)}
                   >
                     <MessageSquare size={15} />
@@ -448,7 +455,7 @@ export default function WorkspaceLayout() {
         />
       )}
       <div className="workspace-main">
-        <EarthBackdrop scene={scene} subdued={!overview} />
+        {!chat && <EarthBackdrop scene={scene} subdued={!overview} />}
         <div className="workspace-appearance" role="group" aria-label="Appearance">
           <button
             type="button"
@@ -492,7 +499,7 @@ export default function WorkspaceLayout() {
             searchResults.map((project) => (
               <Link
                 key={project.id}
-                to={'/studio/' + project.id}
+                to={'/projects?chat=' + project.id}
                 onClick={() => setSearchOpen(false)}
               >
                 <MessageSquare size={17} />
@@ -541,7 +548,7 @@ export default function WorkspaceLayout() {
                 data: { confirmation: 'DELETE FOLDER' },
               });
               if (new URLSearchParams(location.search).get('folderId') === deleteFolder.id)
-                navigate('/projects');
+                navigate('/library');
               setDeleteFolder(null);
               await refreshNavigation();
               toast.success('Folder deleted. Projects kept.');

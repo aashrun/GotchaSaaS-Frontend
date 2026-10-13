@@ -25,3 +25,5 @@ Provider calls have explicit bounds and no automatic paid retries. An interrupte
 ## Remaining deployment work
 
 This is a locally tested set of boundaries, not a completed penetration test or a guarantee that arbitrary generated apps contain no vulnerabilities. Production still needs HTTPS, a real email provider, cloud API/worker/database hosting, reliable multi-worker coordination, monitored logs, backups/restore drills, dedicated service keys/spend allocations, infrastructure isolation review and security testing of generated application behavior. Infrastructure/Stripe adapters without configured credentials are not presented as live verified services.
+
+Agent questions reject credentials, are bounded in size/count, and use a composite project/job foreign key. Only the original requester can answer; workspace permissions and the source revision are rechecked. Dependent writes are blocked server-side until the answer exists. Pausing and answering share a job-row lock so the next worker cannot start before sandbox pause, checkpoint and compute accounting are committed. Explicit worker execution tokens continue fencing previous workers.

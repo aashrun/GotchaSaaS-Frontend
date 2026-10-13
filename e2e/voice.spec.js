@@ -73,7 +73,7 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   await expect(composer).toHaveValue('Existing idea\nBuild a customer dashboard');
   expect(requests).toBe(1);
   await page.getByRole('button', { name: 'Create project from idea' }).click();
-  await expect(page).toHaveURL(/\/studio\//);
+  await expect(page).toHaveURL(/\/projects\?chat=/);
   const studio = page.getByLabel('Ask Gotcha to build or edit your app');
   await studio.fill('Add a table');
   await page.getByRole('button', { name: 'Start voice input' }).click();

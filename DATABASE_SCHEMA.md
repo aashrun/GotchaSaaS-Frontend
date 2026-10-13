@@ -34,3 +34,7 @@ Shared checkpoint actor references use SET NULL when a contributor deletes their
 ## Agent and voice extensions
 
 Migration 006 adds ProjectMemories (project/key unique, revision/provenance), AgentSteps (job/sequence unique), AgentArtifacts (binary browser evidence), AgentConnections (encrypted project credentials), AgentActions (reviewed external operations), and VoiceRequests (duration/reservation/charge checks). Artifact/action job/project composite foreign keys prevent mismatched job ownership. Migration 007 allows manual external actions without an AI job. Migration 008 adds RuntimeLeases with a unique project, actor, sandbox ID, expiration and fixed lease charge. These records cascade with their owning project/user as appropriate; memory actors can become anonymous without losing project history.
+
+## Agent questions (migration 009)
+
+`AgentQuestions` stores project/job/requester identity, a bounded title/question/options list, blocking status, dependent source-path prefixes, pending/answered state and an immutable answer. Its composite foreign key prevents cross-project job associations. Job locks serialize checkpoint pause, compute accounting, answering and safe requeue. Questions are limited to three pending and six total per run; credentials are rejected.

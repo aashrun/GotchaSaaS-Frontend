@@ -21,8 +21,14 @@ import PromptReferences, { ReferenceChips } from '../components/PromptReferences
 import { useAuth } from '../auth/AuthProvider';
 import { nextGreeting } from '../lib/greetings';
 import { toast } from 'sonner';
+import ProjectChat from '../components/ProjectChat';
 
-export default function Dashboard() {
+export default function Dashboard({ library = false }) {
+  const [params] = useSearchParams();
+  const id = params.get('chat');
+  return id && !library ? <ProjectChat key={id} id={id} /> : <ProjectHome library={library} />;
+}
+function ProjectHome({ library }) {
   const { user } = useAuth();
   const { folders, refreshNavigation } = useOutletContext();
   const navigate = useNavigate();
@@ -74,7 +80,7 @@ export default function Dashboard() {
     if (params.get('new') === 'true') {
       setPrompt('');
       setReferences([]);
-      setGreeting(nextGreeting(user));
+      setGreeting((current) => nextGreeting(user, current));
       composer.current?.focus();
       const next = new URLSearchParams(params);
       next.delete('new');
@@ -123,7 +129,7 @@ export default function Dashboard() {
       if (references.length && !empty)
         sessionStorage.setItem('gotcha-references:' + data.project.id, JSON.stringify(references));
       await refreshNavigation();
-      navigate('/studio/' + data.project.id + (intent ? '?build=true' : ''));
+      navigate('/projects?chat=' + data.project.id + (intent ? '&build=true' : ''));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -144,112 +150,114 @@ export default function Dashboard() {
     }
   }
   return (
-    <main className="project-library page-content">
-      <section className="project-start">
-        {selectedFolder && <span className="eyebrow">{selectedFolder.name}</span>}
-        <h1>{greeting}</h1>
-        <form className="project-composer" onSubmit={create}>
-          <textarea
-            ref={composer}
-            aria-label="Describe your app idea"
-            placeholder="Build a customer portal for my agency…"
-            maxLength={12000}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-                event.preventDefault();
-                event.currentTarget.form.requestSubmit();
-              }
-            }}
-          />
-          <ReferenceChips references={references} onChange={setReferences} disabled={busy} />
-          <div className="project-composer-actions">
-            <PromptReferences
-              references={references}
-              onChange={setReferences}
-              onBusy={setReferenceBusy}
-              disabled={busy}
-            />
-            <details className="composer-options">
-              <summary aria-label="Project options">
-                <SlidersHorizontal size={15} />
-                <span>Options</span>
-              </summary>
-              <div className="composer-options-panel">
-                {!!folders.length && (
-                  <label>
-                    <Folder size={14} />
-                    <select
-                      aria-label="Save new project in folder"
-                      value={destination}
-                      onChange={(event) => setDestination(event.target.value)}
-                    >
-                      <option value="">All projects</option>
-                      {folders.map((folder) => (
-                        <option key={folder.id} value={folder.id} disabled={!folder.writable}>
-                          {folder.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                )}
-                <label>
-                  Starter
-                  <select
-                    aria-label="Project starter"
-                    value={starter}
-                    onChange={(event) => setStarter(event.target.value)}
-                  >
-                    <option value="auto">Auto starter</option>
-                    <option value="blank">Blank app</option>
-                    <option value="fullstack">App with login & database</option>
-                    <option value="crm">CRM</option>
-                    <option value="tasks">Tasks</option>
-                    <option value="portfolio">Portfolio</option>
-                    <option value="landing">Landing page</option>
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={(event) => {
-                    setNewName('');
-                    setBlank(true);
-                    event.currentTarget.closest('details').open = false;
-                  }}
-                >
-                  Start with a blank project
-                  <ArrowRight size={13} />
-                </button>
-              </div>
-            </details>
-            <VoiceInput
-              disabled={busy}
-              onBusy={setVoiceBusy}
-              onTranscript={(text) => {
-                setPrompt((value) => (value + (value ? '\n' : '') + text).slice(0, 12000));
-                composer.current?.focus();
+    <main className={'project-library page-content' + (library ? ' project-library-only' : '')}>
+      {!library && (
+        <section className="project-start">
+          {selectedFolder && <span className="eyebrow">{selectedFolder.name}</span>}
+          <h1>{greeting}</h1>
+          <form className="project-composer" onSubmit={create}>
+            <textarea
+              ref={composer}
+              aria-label="Describe your app idea"
+              placeholder="Build a customer portal for my agency…"
+              maxLength={12000}
+              value={prompt}
+              onChange={(event) => setPrompt(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+                  event.preventDefault();
+                  event.currentTarget.form.requestSubmit();
+                }
               }}
             />
-            <button
-              className="primary-button project-send"
-              aria-label="Create project from idea"
-              title="Build this idea"
-              disabled={
-                busy ||
-                voiceBusy ||
-                referenceBusy ||
-                prompt.trim().length < 5 ||
-                (destination && !folders.find((folder) => folder.id === destination)?.writable)
-              }
-            >
-              {busy ? <Loader2 size={18} className="voice-spinner" /> : <ArrowUp size={19} />}
-            </button>
-          </div>
-        </form>
-      </section>
-      {(loading || error || data?.total > 0 || query || archived) && (
+            <ReferenceChips references={references} onChange={setReferences} disabled={busy} />
+            <div className="project-composer-actions">
+              <PromptReferences
+                references={references}
+                onChange={setReferences}
+                onBusy={setReferenceBusy}
+                disabled={busy}
+              />
+              <details className="composer-options">
+                <summary aria-label="Project options">
+                  <SlidersHorizontal size={15} />
+                  <span>Options</span>
+                </summary>
+                <div className="composer-options-panel">
+                  {!!folders.length && (
+                    <label>
+                      <Folder size={14} />
+                      <select
+                        aria-label="Save new project in folder"
+                        value={destination}
+                        onChange={(event) => setDestination(event.target.value)}
+                      >
+                        <option value="">All projects</option>
+                        {folders.map((folder) => (
+                          <option key={folder.id} value={folder.id} disabled={!folder.writable}>
+                            {folder.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  <label>
+                    Starter
+                    <select
+                      aria-label="Project starter"
+                      value={starter}
+                      onChange={(event) => setStarter(event.target.value)}
+                    >
+                      <option value="auto">Auto starter</option>
+                      <option value="blank">Blank app</option>
+                      <option value="fullstack">App with login & database</option>
+                      <option value="crm">CRM</option>
+                      <option value="tasks">Tasks</option>
+                      <option value="portfolio">Portfolio</option>
+                      <option value="landing">Landing page</option>
+                    </select>
+                  </label>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={(event) => {
+                      setNewName('');
+                      setBlank(true);
+                      event.currentTarget.closest('details').open = false;
+                    }}
+                  >
+                    Start with a blank project
+                    <ArrowRight size={13} />
+                  </button>
+                </div>
+              </details>
+              <VoiceInput
+                disabled={busy}
+                onBusy={setVoiceBusy}
+                onTranscript={(text) => {
+                  setPrompt((value) => (value + (value ? '\n' : '') + text).slice(0, 12000));
+                  composer.current?.focus();
+                }}
+              />
+              <button
+                className="primary-button project-send"
+                aria-label="Create project from idea"
+                title="Build this idea"
+                disabled={
+                  busy ||
+                  voiceBusy ||
+                  referenceBusy ||
+                  prompt.trim().length < 5 ||
+                  (destination && !folders.find((folder) => folder.id === destination)?.writable)
+                }
+              >
+                {busy ? <Loader2 size={18} className="voice-spinner" /> : <ArrowUp size={19} />}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+      {library && (
         <section className="project-list-section">
           <div className="project-list-heading">
             <h2>
@@ -305,7 +313,7 @@ export default function Dashboard() {
                   key={project.id}
                   style={{ zIndex: menu === project.id ? 20 : 1 }}
                 >
-                  <Link className="library-project-link" to={'/studio/' + project.id}>
+                  <Link className="library-project-link" to={'/projects?chat=' + project.id}>
                     <span className="library-project-icon">
                       <Folder size={20} />
                     </span>

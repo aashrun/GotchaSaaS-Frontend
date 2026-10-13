@@ -115,7 +115,7 @@ export default function AuthPage() {
     }
   }
   return (
-    <div className="auth-page">
+    <div className={'auth-page' + (mode === 'login' ? ' auth-login' : '')}>
       <aside className="auth-brand">
         <PlanetScene />
         <div className="auth-brand-copy">

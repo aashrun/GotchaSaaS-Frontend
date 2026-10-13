@@ -10,13 +10,15 @@ const greetings = [
   (name) => `What deserves a launch button, ${name}?`,
   (name) => `Got five minutes and a bold idea, ${name}?`,
 ];
-export function nextGreeting(user) {
+export function nextGreeting(user, currentGreeting) {
   const name = user.firstName?.trim().split(/\s+/)[0] || 'builder';
   const key = 'gotcha-greeting:' + user.id;
   let previous = -1;
   try {
     previous = Number(sessionStorage.getItem(key) ?? -1);
   } catch {}
+  const displayed = greetings.findIndex((greeting) => greeting(name) === currentGreeting);
+  if (displayed >= 0) previous = displayed;
   let index = Math.floor(Math.random() * (greetings.length - 1));
   if (previous >= 0 && previous < greetings.length && index >= previous) index++;
   try {

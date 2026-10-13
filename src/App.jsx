@@ -1,5 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { Suspense } from 'react';
 import ProtectedRoute from './auth/ProtectedRoute';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
@@ -12,7 +12,10 @@ import Team from './pages/Team';
 import Admin from './pages/Admin';
 import Info from './pages/Info';
 import ErrorBoundary from './components/ErrorBoundary';
-const Studio = lazy(() => import('./pages/Studio'));
+function LegacyProjectLink() {
+  const { id } = useParams();
+  return <Navigate to={'/projects?chat=' + id} replace />;
+}
 export default function App() {
   return (
     <ErrorBoundary>
@@ -36,6 +39,7 @@ export default function App() {
           >
             <Route path="/dashboard" element={<Navigate to="/projects" replace />} />
             <Route path="/projects" element={<Dashboard />} />
+            <Route path="/library" element={<Dashboard library />} />
             <Route path="/templates" element={<Templates />} />
             <Route path="/integrations" element={<Integrations />} />
             <Route path="/billing" element={<Billing />} />
@@ -46,14 +50,7 @@ export default function App() {
             <Route path="/analytics" element={<Info type="analytics" />} />
             <Route path="/api-keys" element={<Info type="api-keys" />} />
           </Route>
-          <Route
-            path="/studio/:id"
-            element={
-              <ProtectedRoute>
-                <Studio />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/studio/:id" element={<LegacyProjectLink />} />
           <Route path="/privacy" element={<Info type="privacy" />} />
           <Route path="/terms" element={<Info type="terms" />} />
           <Route path="*" element={<Navigate to="/" replace />} />

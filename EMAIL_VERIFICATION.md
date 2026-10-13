@@ -15,12 +15,10 @@ APP_ORIGIN=https://your-builder-domain.example
 
 ## First build
 
-1. Enter an idea on the project home and press the arrow. This saves the idea and opens the studio.
-2. If verification is pending, use **Send verification email**, open the link, then **I’ve verified — check status**. Settings also offers resend and a status refresh.
-3. Use **Review credits & build** (or the composer arrow). Review the estimated credits and approve generation.
-4. Watch progress in the conversation. The preview updates after the generated app passes its checks. A starter preview is explicitly labeled as not built yet.
-
-The UI identifies missing model/sandbox configuration and links to Connectors. Creating a project does not itself execute a paid build without approval.
+1. Enter an idea on New Project and press the arrow. The idea is saved and becomes a conversation in the same workspace.
+2. If verification is pending, use **Send verification email**, open the link, then **I’ve verified — check status**. Settings also offers resend and a status refresh. Your prompt stays saved.
+3. For a verified account, sending starts a bounded agent build automatically. If the first send was blocked, use **Retry this build** after resolving verification or configuration. No extra Studio screen or estimate approval dialog appears. Available credits and monthly spending limits still apply; unused reserved credits return after the run.
+4. Watch actual agent activity in chat. Answer questions there; dependent work pauses or waits. The mini-browser opens on the right only after current source passes its checks. Code and checkpoints are optional Project tools.
 
 ## Isolated browser testing
 

@@ -231,3 +231,85 @@
     font-size: 32px;
   }
 }
+
+/* Login fits the viewport; long recovery/signup forms retain their own layout. */
+body:has(.auth-login) {
+  overflow: hidden;
+}
+.auth-page.auth-login {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.auth-login .auth-brand,
+.auth-login .auth-form-panel {
+  height: 100%;
+  min-height: 0;
+}
+.auth-login .auth-form-panel {
+  padding: 56px 40px 24px;
+}
+@media (max-height: 800px) {
+  .auth-login .auth-form > .logo {
+    margin-bottom: 20px;
+  }
+  .auth-login .auth-form > h1 {
+    font-size: 32px;
+    margin: 10px 0;
+  }
+  .auth-login .auth-form .form-stack {
+    margin-top: 20px;
+    gap: 14px;
+  }
+  .auth-login .auth-security-note {
+    margin-top: 18px;
+    padding-top: 16px;
+  }
+}
+@media (max-height: 700px) {
+  .auth-login .auth-security-note {
+    display: none;
+  }
+  .auth-login .auth-form > p {
+    line-height: 1.5;
+  }
+  .auth-login .auth-switch {
+    margin-top: 16px;
+  }
+}
+@media (max-height: 550px) {
+  .auth-login .auth-form-panel {
+    padding: 24px 28px 16px;
+  }
+  .auth-login .auth-form > .logo {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  .auth-login .auth-form > h1 {
+    font-size: 24px;
+  }
+  .auth-login .auth-form > p {
+    display: none;
+  }
+  .auth-login .auth-form .form-stack {
+    margin-top: 12px;
+    gap: 10px;
+  }
+  .auth-login .auth-form .form-stack input {
+    min-height: 40px;
+  }
+  .auth-login .auth-form .form-stack .primary-button {
+    min-height: 40px;
+    padding: 9px 16px;
+  }
+  .auth-login .auth-form .error-state {
+    margin: 8px 0;
+    padding: 8px;
+  }
+}
+@media (max-width: 480px) {
+  .auth-login .auth-form-panel {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}

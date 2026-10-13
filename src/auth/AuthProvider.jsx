@@ -25,6 +25,7 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await api.get('/auth/me');
       accept(data);
+      return data.user;
     } catch (e) {
       if (e.response?.status === 401) {
         setUser(null);

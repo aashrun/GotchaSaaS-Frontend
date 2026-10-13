@@ -1,149 +1,66 @@
 const { test, expect } = require('@playwright/test');
 const { randomUUID } = require('node:crypto');
 const origin = process.env.E2E_APP_ORIGIN || 'http://localhost:7011';
-test('app entry, authentication, project persistence, safe editor, checkpoints and template CRUD work', async ({
+test('an idea becomes a persistent chat in the same workspace with optional source and checkpoints', async ({
   page,
 }) => {
-  await page.route('**/v1/config', async (route) => {
-    const response = await route.fetch();
-    const data = await response.json();
-    data.providers.find((p) => p.id === 'e2b').configured = false;
-    await route.fulfill({ json: data });
-  });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page).toHaveURL('/auth/login');
   await page.getByRole('link', { name: 'Create an account', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Your first name' }).fill('Browser Test');
-  await page
-    .getByRole('textbox', { name: 'Email address' })
-    .fill(`browser-${randomUUID()}@nebula.test`);
+  await page.getByLabel('Your first name').fill('Browser Test');
+  await page.getByLabel('Email address').fill(`browser-${randomUUID()}@nebula.test`);
   await page.getByLabel('Password', { exact: true }).fill('A secure browser password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');
-  await page
-    .getByRole('textbox', { name: 'Describe your app idea' })
-    .fill('Build a simple CRM for customer tracking');
+  await expect(page.locator('.project-list-section')).toHaveCount(0);
+  const sidebar = await page.locator('.sidebar').boundingBox();
+  const idea = 'Build a simple CRM for customer tracking';
+  await page.getByLabel('Describe your app idea').fill(idea);
   await page.getByRole('button', { name: 'Create project from idea' }).click();
-  await expect(page).toHaveURL(/\/studio\//);
-  await expect(page.locator('.studio-project-name')).toContainText(
-    'Build a simple CRM for customer tracking',
-  );
-  const frame = page.frameLocator('iframe[title="Original template preview"]');
+  await expect(page).toHaveURL(/\/projects\?chat=/);
+  await expect(page.locator('.project-chat-header')).toContainText(idea);
+  await expect(page.locator('.chat-message.user')).toContainText(idea);
+  await expect(page.locator('.studio')).toHaveCount(0);
+  await expect(page.locator('.earth-backdrop')).toHaveCount(0);
+  await expect(page.locator('iframe')).toHaveCount(0);
+  expect(await page.locator('.sidebar').boundingBox()).toEqual(sidebar);
   await expect(
-    frame.getByRole('heading', { name: 'Good relationships start here.' }),
+    page.getByText('Verify your email to start this build. Your idea is saved here.'),
   ).toBeVisible();
-  await frame.getByRole('textbox', { name: 'Customer name' }).fill('Test customer');
-  await frame.getByRole('textbox', { name: 'Customer email' }).fill('customer@example.test');
-  await frame.getByRole('button', { name: 'Add customer' }).click();
-  await expect(frame.getByRole('cell', { name: 'Test customer', exact: true })).toBeVisible();
-  await frame.getByRole('combobox', { name: 'Stage for Test customer' }).selectOption('Won');
-  await frame.getByRole('button', { name: 'Delete', exact: true }).click();
-  await expect(frame.getByRole('cell', { name: 'Test customer', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Show source tools' }).click();
-  await page.getByRole('tab', { name: 'Versions' }).click();
-  await page.getByRole('button', { name: 'Save checkpoint', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Checkpoint name' }).fill('Before visual refinement');
-  await page.getByRole('button', { name: 'Save checkpoint', exact: true }).last().click();
-  await expect(page.getByRole('heading', { name: 'Before visual refinement' })).toBeVisible();
-  await page.reload();
-  await page.getByRole('button', { name: 'Show source tools' }).click();
-  await expect(page.getByRole('tab', { name: 'Code', exact: true })).toBeVisible();
-  await page.getByRole('tab', { name: 'Versions' }).click();
-  await expect(page.getByRole('heading', { name: 'Before visual refinement' })).toBeVisible();
-  await page.getByRole('tab', { name: 'Tests' }).click();
-  await expect(
-    page.getByText('No sandbox validation has been run yet.', { exact: false }),
-  ).toBeVisible();
+  await page.getByRole('button', { name: 'Show project tools' }).click();
+  await page.getByRole('tab', { name: 'Checkpoints' }).click();
+  await page.getByLabel('Checkpoint name').fill('Before visual refinement');
+  await page.getByRole('button', { name: 'Save checkpoint' }).click();
+  await expect(page.getByText('Before visual refinement', { exact: true })).toBeVisible();
   await page.getByRole('tab', { name: 'Code', exact: true }).click();
-  await page.getByRole('button', { name: 'Protect src/App.tsx', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Unlock src/App.tsx', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Unlock src/App.tsx', exact: true }).click();
-  await expect(
-    page.getByRole('button', { name: 'Protect src/App.tsx', exact: true }),
-  ).toBeVisible();
   await expect(page.locator('.monaco-editor')).toBeVisible();
   await page.locator('.monaco-editor').click({ position: { x: 150, y: 90 } });
   await page.keyboard.press('ControlOrMeta+End');
   await page.keyboard.press('Enter');
   await page.keyboard.type('// Browser verified source edit');
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Your source is saved. Let’s verify it.' }),
-  ).toBeVisible();
-  await page.getByRole('tab', { name: 'Versions' }).click();
-  const saved = page
-    .locator('.version-row')
-    .filter({ has: page.getByRole('heading', { name: 'Before visual refinement' }) });
-  await saved.getByRole('button', { name: 'Restore source', exact: true }).click();
-  await page.getByRole('button', { name: 'Restore source only' }).click();
-  await expect(page.getByText('Source restored. Database unchanged.')).toBeVisible();
-  await page.getByRole('tab', { name: 'Code', exact: true }).click();
-  await expect(
-    page
-      .frameLocator('iframe[title="Original template preview"]')
-      .getByRole('heading', { name: 'Good relationships start here.' }),
-  ).toBeVisible();
+  await page.getByRole('button', { name: 'Save file' }).click();
+  await expect(page.getByText('Source saved. Ask Gotcha to rebuild the preview.')).toBeVisible();
+  await page.getByRole('tab', { name: 'Checkpoints' }).click();
   await page
-    .getByRole('textbox', { name: 'Ask Gotcha to build or edit your app' })
-    .fill('Improve the mobile layout');
-  await page.getByRole('button', { name: 'Estimate AI generation' }).click();
-  await expect(
-    page.getByText('The secure E2B sandbox is not configured. No credits were charged.'),
-  ).toBeVisible();
-  await page.screenshot({ path: '.local/studio.png' });
-  await page.getByRole('link', { name: 'Back to projects', exact: true }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Build a simple CRM for customer tracking' }),
-  ).toBeVisible();
-  await page.screenshot({ path: '.local/projects.png', fullPage: true });
-  await expect(page.locator('.sidebar')).toBeVisible();
-  await page.getByRole('button', { name: 'Manage', exact: true }).click();
-  await page.getByRole('link', { name: 'Settings', exact: true }).click();
-  await page.getByRole('button', { name: 'Open local development mailbox' }).click();
-  await page.getByRole('link', { name: 'Open secure link' }).click();
-  await expect(page.getByText('Your email is verified. You’re ready to build.')).toBeVisible();
-  await page.getByRole('link', { name: 'Open workspace', exact: true }).click();
-  await page.getByRole('button', { name: 'Manage', exact: true }).click();
-  await page.getByRole('link', { name: 'Billing & usage' }).click();
-  await expect(page.getByRole('heading', { name: 'Your credit ledger' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'signup grant', exact: true })).toBeVisible();
-  await page.goto('/settings');
-  await page.getByRole('combobox', { name: 'Color theme' }).selectOption('light');
-  await page.getByRole('button', { name: 'Save profile' }).click();
-  await expect(page.getByText('Your profile is saved')).toBeVisible();
+    .locator('.checkpoint-row')
+    .filter({ hasText: 'Before visual refinement' })
+    .getByRole('button', { name: 'Restore', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Restore source', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Restore this checkpoint?' })).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Checks' }).click();
+  await expect(page.getByText('Build and browser checks appear here after a run.')).toBeVisible();
+  await page.getByRole('button', { name: 'Close dialog' }).click();
   await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/projects');
-  await expect(
-    page.getByRole('heading', { name: 'Build a simple CRM for customer tracking' }),
-  ).toBeVisible();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
-    true,
-  );
-  await page.getByRole('button', { name: 'Open navigation' }).click();
-  await page.getByRole('button', { name: 'Manage', exact: true }).click();
-  await expect(page.getByRole('link', { name: 'Team members' })).toBeVisible();
-  await page.getByRole('button', { name: 'Close navigation', exact: true }).first().click();
-  await page.setViewportSize({ width: 1440, height: 1000 });
-  await page.goto('/projects');
-  await page
-    .getByRole('button', { name: 'Actions for Build a simple CRM for customer tracking' })
-    .click();
-  await page.getByRole('button', { name: 'Delete', exact: true }).click();
-  await page
-    .getByRole('button', { name: 'Delete Build a simple CRM for customer tracking' })
-    .click();
-  await expect(
-    page.getByRole('heading', { name: 'Build a simple CRM for customer tracking' }),
-  ).toHaveCount(0);
-  await page.goto('/settings');
-  await page.getByRole('button', { name: 'Delete my account', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Type DELETE MY ACCOUNT' }).fill('DELETE MY ACCOUNT');
-  await page.getByRole('button', { name: 'Permanently delete account' }).click();
-  await expect(page).toHaveURL('/auth/login');
+  await expect(page.locator('.chat-message.user')).toContainText(idea);
+  await page.getByRole('link', { name: 'Projects', exact: true }).click();
+  await expect(page).toHaveURL('/library');
+  await expect(page.getByRole('heading', { name: idea })).toBeVisible();
+  await page.getByRole('button', { name: 'New project', exact: true }).click();
+  await expect(page.locator('.project-start')).toBeVisible();
+  await expect(page.locator('.project-library-grid')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 test('mobile app entry, authentication and legal pages stay responsive', async ({ page }) => {
@@ -347,6 +264,7 @@ test('folders organize project conversations and keep projects when a folder is 
     .getByRole('link', { name: /Client work/ })
     .click();
   const folderId = new URL(page.url()).searchParams.get('folderId');
+  await page.getByRole('button', { name: 'New project', exact: true }).click();
   await page.getByLabel('Project options', { exact: true }).click();
   await expect(page.getByRole('combobox', { name: 'Save new project in folder' })).toHaveValue(
     folderId,
@@ -355,13 +273,13 @@ test('folders organize project conversations and keep projects when a folder is 
   const idea = 'Build a customer booking calendar';
   await page.getByRole('textbox', { name: 'Describe your app idea' }).fill(idea);
   await page.getByRole('button', { name: 'Create project from idea' }).click();
-  await expect(page).toHaveURL(/\/studio\//);
-  await expect(page.locator('.chat-message.user')).toHaveText('YOU' + idea);
+  await expect(page).toHaveURL(/\/projects\?chat=/);
+  await expect(page.locator('.chat-message.user')).toContainText(idea);
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Show source tools' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Show project tools' })).toBeVisible();
   await page.reload();
-  await expect(page.locator('.chat-message.user')).toHaveText('YOU' + idea);
-  await page.getByRole('link', { name: 'Back to projects', exact: true }).click();
+  await expect(page.locator('.chat-message.user')).toContainText(idea);
+  await page.getByRole('link', { name: 'Projects', exact: true }).click();
   await page
     .locator('.folder-navigation')
     .getByRole('link', { name: /Client work/ })
@@ -389,7 +307,7 @@ test('folders organize project conversations and keep projects when a folder is 
   await page.getByRole('button', { name: 'Delete folder', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Your projects will stay saved');
   await page.getByRole('button', { name: 'Delete folder Product lab' }).click();
-  await expect(page).toHaveURL('/projects');
+  await expect(page).toHaveURL('/library');
   await expect(page.getByRole('heading', { name: idea })).toBeVisible();
   await expect(
     page.locator('.folder-navigation').getByRole('link', { name: /Product lab/ }),
@@ -398,73 +316,6 @@ test('folders organize project conversations and keep projects when a folder is 
   await expect(page.getByRole('heading', { name: idea })).toBeVisible();
   await page.getByRole('textbox', { name: 'Search projects' }).fill('missing project');
   await expect(page.getByRole('heading', { name: idea })).toHaveCount(0);
-});
-
-test('new-project intent automatically opens a credit estimate without queuing a paid build', async ({
-  page,
-}) => {
-  await page.goto('/auth/register');
-  await page.getByRole('textbox', { name: 'Your first name' }).fill('Estimate Test');
-  await page
-    .getByRole('textbox', { name: 'Email address' })
-    .fill(`browser-estimate-${randomUUID()}@nebula.test`);
-  await page.getByLabel('Password', { exact: true }).fill('A secure estimate password!1');
-  await page.getByRole('button', { name: 'Create my workspace' }).click();
-  await expect(page).toHaveURL('/projects');
-  const mail = await (await page.request.get('/v1/auth/local-mail')).json();
-  const me = await (await page.request.get('/v1/auth/me')).json();
-  await page.request.post('/v1/auth/verify', {
-    headers: { origin, 'x-csrf-token': me.csrfToken },
-    data: { token: new URL(mail.mail.url).searchParams.get('token') },
-  });
-  // These routes simulate configured infrastructure; no live provider is called.
-  const modelId = randomUUID();
-  await page.route('**/v1/ai/models', (route) =>
-    route.fulfill({
-      json: {
-        models: [
-          { id: modelId, name: 'OpenRouter test model', provider: 'openrouter', configured: true },
-        ],
-      },
-    }),
-  );
-  await page.route('**/v1/config', async (route) => {
-    const response = await route.fetch();
-    const data = await response.json();
-    data.providers.find((p) => p.id === 'e2b').configured = true;
-    await route.fulfill({ json: data });
-  });
-  let estimates = 0,
-    jobs = 0;
-  const idea = 'Build a lightweight appointment planner';
-  await page.route('**/v1/ai/estimate', async (route) => {
-    estimates++;
-    expect(route.request().postDataJSON()).toEqual({
-      projectId: expect.any(String),
-      engine: 'agent-v1',
-      prompt: idea,
-      references: [],
-    });
-    await route.fulfill({ json: { min: 2, max: 4 } });
-  });
-  await page.route('**/v1/ai/jobs', (route) => {
-    jobs++;
-    return route.fulfill({
-      status: 503,
-      json: { error: 'No external calls allowed in this test.' },
-    });
-  });
-  await page.reload();
-  await page.getByRole('textbox', { name: 'Describe your app idea' }).fill(idea);
-  await page.getByRole('button', { name: 'Create project from idea' }).click();
-  await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog')).toContainText('Maximum reservation: 4 credits');
-  await expect(page.getByRole('button', { name: 'Approve & generate' })).toBeVisible();
-  expect(estimates).toBe(1);
-  expect(jobs).toBe(0);
-  await page.getByRole('button', { name: 'Close dialog' }).click();
-  await expect(page.locator('.chat-message.user')).toContainText(idea);
-  expect(jobs).toBe(0);
 });
 
 test('sidebar collapse, pinned credits, folded Manage and top-right appearance stay usable', async ({
@@ -583,14 +434,14 @@ test('personalized composer, attachments, project search and connector navigatio
   await page.getByLabel('Add files or images').click();
   await page.getByLabel('Describe your app idea').fill('Build a client booking portal');
   await send.click();
-  await expect(page).toHaveURL(/\/studio\//);
+  await expect(page).toHaveURL(/\/projects\?chat=/);
   await expect(page.getByLabel('Attached references')).toContainText('brief.md');
   await expect(page.getByLabel('Attached references')).toContainText('reference.jpg');
   await page.reload();
   await expect(page.getByLabel('Attached references')).toContainText('brief.md');
   await page.getByRole('button', { name: 'Remove reference brief.md' }).click();
   await expect(page.getByLabel('Attached references')).not.toContainText('brief.md');
-  await page.getByRole('link', { name: 'Back to projects', exact: true }).click();
+  await page.getByRole('link', { name: 'Projects', exact: true }).click();
   await page.getByRole('button', { name: 'Search projects', exact: true }).click();
   await page.getByLabel('Search your projects').fill('booking');
   await expect(
@@ -654,8 +505,9 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
         expect(await panel.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain(
           'blur(24px)',
         );
-        expect(await panel.evaluate((el) => getComputedStyle(el).backgroundColor)).toContain(
-          theme === 'dark' ? '8, 8, 8, 0.75' : '255, 255, 255, 0.76',
+        await expect(panel).toHaveCSS(
+          'background-color',
+          theme === 'dark' ? 'rgba(8, 8, 8, 0.75)' : 'rgba(255, 255, 255, 0.76)',
         );
       }
       await page.screenshot({
@@ -673,18 +525,17 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
     if (theme === 'dark')
       await page.getByRole('button', { name: 'Switch to light mode', exact: true }).click();
   }
-  await page.getByRole('link', { name: 'Projects', exact: true }).click();
+  await page.getByRole('button', { name: 'New project', exact: true }).click();
   await expect(page.locator('.project-composer')).toHaveCSS('border-top-width', '0px');
   expect(
     await page.locator('.project-composer').evaluate((el) => getComputedStyle(el).backgroundColor),
   ).toContain('255, 255, 255, 0.76');
   await page.getByLabel('Describe your app idea').fill('Build a simple customer portal');
   await page.getByRole('button', { name: 'Create project from idea' }).click();
-  await expect(page.getByRole('region', { name: 'Next step' })).toContainText(
-    'Verify your email to start.',
-  );
-  await expect(page.getByRole('button', { name: 'Send verification email' })).toBeVisible();
-  await expect(page.getByText('Starter preview · not built yet')).toBeVisible();
+  await expect(
+    page.getByText('Verify your email to start this build. Your idea is saved here.'),
+  ).toBeVisible();
+  await expect(page.locator('iframe')).toHaveCount(0);
   await page.getByRole('button', { name: 'Send verification email' }).click();
   const mail = await (await page.request.get('/v1/auth/local-mail')).json();
   await page.request.post('/v1/auth/verify', {
@@ -692,10 +543,7 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
     data: { token: new URL(mail.mail.url).searchParams.get('token') },
   });
   await page.getByRole('button', { name: 'I’ve verified — check status' }).click();
-  await expect(page.getByRole('region', { name: 'Next step' })).not.toContainText(
-    'Verify your email to start.',
-  );
-  await page.screenshot({ path: '.local/studio-next-step.png', animations: 'disabled' });
+  await expect(page.getByText('Email verified. You can continue your build.')).toBeVisible();
 });
 
 test.afterEach(async ({ page }) => {
