@@ -16,7 +16,7 @@ Publishing checkouts live under ignored `.local/repositories/`. `python3 GotchaS
 - `GotchaSaaS-Frontend/src/components/ProjectChat.jsx`: ongoing chat, real job activity, agent questions and verified app preview in the same workspace.
 - `GotchaSaaS-Frontend/src/components/ProjectTools.jsx`: optional code, checkpoints, checks and GitHub/memory tools.
 
-Workspace folders are optional groups of projects, similar to [Lovable's project folders](https://docs.lovable.dev/introduction/project-folders). Deleting one preserves its projects. They are useful when someone has several clients or apps, so they remain available in the collapsible sidebar. They do not create directories inside a generated app.
+Workspace folders are optional groups of projects, similar to [Lovable's project folders](https://docs.lovable.dev/introduction/project-folders). For example, a founder can group three apps under one client without changing any app's code or build. Deleting the folder preserves its projects. They are useful when someone has several clients or apps, so they remain available in the collapsible sidebar; a user can ignore them entirely. These sidebar groups are separate from the two repository directories on disk and do not create directories inside a generated app.
 
 A generated frontend app has `src/` for components/styles and protected package, entry and build configuration. A full-stack app additionally has editable `server/index.js`, protected `src/lib/runtime.ts`, and protected `tests/runtime.test.js`. The preview server and PostgreSQL live only inside E2B. The ZIP includes source, not the preview database or platform credentials. Exported apps require their own application database URL and deployment environment.
 
@@ -24,7 +24,7 @@ Preview data persists while its E2B sandbox is paused/resumed. A new build curre
 
 ## From idea to app
 
-The sidebar stays mounted while the New Project composer becomes a normal conversation on a neutral black/white surface. Sending a prompt saves it, estimates the funded maximum, and queues one agent build; it reserves available credits automatically, subject to server spending/plan limits. Verification, missing configuration and insufficient credits appear in the conversation, with the prompt preserved for retry. There is no credit-approval workbench or simulated template preview.
+The sidebar stays mounted while the New Project composer becomes a normal conversation on a neutral dark/light gray surface. User bubbles have no sender label and stay compact; both themes use readable text and borderless translucent composers. Sending a prompt saves it, estimates the funded maximum, and queues one agent build; it reserves available credits automatically, subject to server spending/plan limits. Verification, missing configuration and insufficient credits appear in the conversation, with the prompt preserved for retry. There is no credit-approval workbench or simulated template preview.
 
 Actual file/research/check/browser actions produce durable activity updates. A concise model-written progress summary may accompany those actions; private model reasoning is not displayed. Once current source has passed build and browser checks, its preview opens beside the chat. The preview is an isolated browser frame. E2B is the cloud computer that builds and tests the app, not the browser UI. Full-stack interactions pass through the authenticated API broker; an explicit five-minute backend preview lease has its own credit charge.
 

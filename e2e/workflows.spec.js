@@ -492,6 +492,11 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
       await expect(page).toHaveURL(path);
       await expect(page.locator('.page-content')).toBeVisible();
       await expect(page.locator('.panel').first()).toBeVisible();
+      if (path === '/settings')
+        await expect(page.getByRole('textbox', { name: 'First name', exact: true })).toHaveCSS(
+          'background-color',
+          theme === 'dark' ? 'rgb(40, 40, 43)' : 'rgb(222, 222, 226)',
+        );
       if (path === '/team') await expect(page.locator('.member-row').first()).toBeVisible();
       const content = await page.locator('.page-content').boundingBox();
       if (!contentWidth) contentWidth = content.width;
@@ -505,7 +510,7 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
         await expect(panel).toHaveCSS('backdrop-filter', /blur\(24px\)/);
         await expect(panel).toHaveCSS(
           'background-color',
-          theme === 'dark' ? 'rgba(8, 8, 8, 0.75)' : 'rgba(255, 255, 255, 0.76)',
+          theme === 'dark' ? 'rgba(8, 8, 8, 0.75)' : 'rgba(255, 255, 255, 0.36)',
         );
       }
       await page.screenshot({
@@ -527,7 +532,7 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
   await expect(page.locator('.project-composer')).toHaveCSS('border-top-width', '0px');
   expect(
     await page.locator('.project-composer').evaluate((el) => getComputedStyle(el).backgroundColor),
-  ).toContain('255, 255, 255, 0.76');
+  ).toContain('255, 255, 255, 0.36');
   await page.getByLabel('Describe your app idea').fill('Build a simple customer portal');
   await page.getByRole('button', { name: 'Create project from idea' }).click();
   await expect(

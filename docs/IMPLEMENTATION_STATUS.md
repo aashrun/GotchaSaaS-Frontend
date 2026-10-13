@@ -1,6 +1,6 @@
 # Implementation and verification status
 
-Updated 13 October 2026. The local integration workspace runs React/Vite on port 7011 and Express/PostgreSQL on port 7012. Standalone frontend and backend exports are prepared for GotchaSaaS-Frontend and GotchaSaaS-Backend, each with its own lockfile and setup instructions. The original Desktop boilerplate repositories remain untouched. Production cloud hosting has not been performed.
+Updated 14 October 2026. The local integration workspace runs React/Vite on port 7011 and Express/PostgreSQL on port 7012. Standalone frontend and backend exports are prepared for GotchaSaaS-Frontend and GotchaSaaS-Backend, each with its own lockfile and setup instructions. The original Desktop boilerplate repositories remain untouched. Production cloud hosting has not been performed.
 
 ## Implemented
 
@@ -9,6 +9,8 @@ Updated 13 October 2026. The local integration workspace runs React/Vite on port
 - Original Gotcha! Classic Quality wordmark and Gotcha Games favicon, borderless rounded inset canvas, smooth minimal sidebar control, account-scoped search, collapsible Recents, ten personalized greetings, compact circular upward send button with adjacent microphone, shared validated text/image references, and a clearly labeled connector roadmap.
 - OpenRouter Responses agent loop with strict server-validated file/search/write/check/browser/research/memory/repository/action tools. Native function result continuity, durable steps/candidates, role routing, bounded context/outputs/calls/compute, worker lease fencing and safe checkpoint resume.
 - Continuous workspace chat with direct bounded build submission, real pulsing tool activity and verified right-side preview; a separate project library keeps New Project uncluttered. Requester-scoped durable question/answer tools support blocking checkpoints and deferred source writes during independent work. Login stays within the viewport; selected navigation, pastel buttons and collapse controls are borderless in both themes.
+- Compact user bubbles without a sender label, readable theme-aware chat text, dark/light gray conversation surfaces, visible light glass over the cloud background, stronger input contrast and borderless pinned credits.
+- Development-only GPT-6 Luna policy across all coding/research roles and both generation engines, enforced before reservation, sandbox startup and provider dispatch. Production retains subscription-bound specialist routing; Jev remains a documented evaluation strategy rather than a live routing dependency.
 - Root-owned E2B tools and dependency image with denied internet/public ingress, unprivileged generated-code processes, real Chromium and isolated PostgreSQL.
 - Express/PostgreSQL full-stack starter with signup/login, persistent records, per-user authorization, protected acceptance checks, browser assertions and screenshots. Opaque-origin preview with an authenticated localhost API broker and explicit five-minute credit lease.
 - Dictation in home and chat with actual waveform, cancel/finish, canonical PCM validation, OpenRouter MAI-Transcribe 2, idempotent usage metering and refunds.
@@ -19,8 +21,8 @@ Updated 13 October 2026. The local integration workspace runs React/Vite on port
 
 | Check                                       | Result                                                                                       |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Backend unit/PostgreSQL/security tests      | 72 passed, zero failures                                                                     |
-| Browser workflows                           | 14 passed across the suite and focused reruns, zero unresolved failures                      |
+| Backend unit/PostgreSQL/security tests      | 74 passed, zero failures                                                                     |
+| Browser workflows                           | 16 passed across the suite and focused reruns, zero unresolved failures                      |
 | Syntax and production build                 | Passed                                                                                       |
 | npm production and sandbox dependency audit | Zero vulnerabilities reported                                                                |
 | Migrations 006–008 down/up                  | Existing source preserved on isolated migration DB                                           |

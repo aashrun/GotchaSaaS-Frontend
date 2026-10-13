@@ -1,6 +1,6 @@
 # Agent harness and economics
 
-Implemented locally on 13 October 2026. This is a bounded application-building agent, with real tools and recorded evidence. It is not an unlimited autonomous account with every possible connector.
+Updated locally on 14 October 2026. This is a bounded application-building agent, with real tools and recorded evidence. It is not an unlimited autonomous account with every possible connector.
 
 ## Runtime
 
@@ -28,6 +28,8 @@ Completion requires successful checks and visible browser assertions on the curr
 
 ## Models and customer plans
 
+Development is locked to GPT-6 Luna through OpenRouter for every coding/research role, including manually selected premium models and accounts with paid subscriptions. Missing Luna configuration fails closed. Queue execution and provider dispatch enforce the lock again; voice keeps its separate transcription model. The table below applies outside development.
+
 | Role                                     | Economy, including accounts without an active subscription | Balanced active subscription | Quality / pro active subscription |
 | ---------------------------------------- | ---------------------------------------------------------- | ---------------------------- | --------------------------------- |
 | UI implementation                        | GPT-6 Luna                                                 | GPT-6.1 Sol                  | GPT-6.1 Sol                       |
@@ -35,7 +37,7 @@ Completion requires successful checks and visible browser assertions on the curr
 | Architecture, auth, billing, permissions | GPT-6 Luna with the supported starter and checks           | Claude Sonnet 5.5            | Claude Opus 5.5                   |
 | Research                                 | GPT-6 Luna                                                 | GPT-6 Luna                   | GPT-6 Luna                        |
 
-This is a cost policy, not a claim that a benchmark proves one model is universally best. The customer can explicitly select an enabled OpenRouter model instead, with its larger estimate. Manual selection applies to implementation roles; research remains the inexpensive specialist. The client cannot claim a higher subscription tier. `STRIPE_PLAN_NAME` associates the configured server-side Stripe price with economy, balanced or pro; a multi-price commercial catalog is still future work. Prices and enabled model IDs are operator configuration snapshotted at enqueue time.
+This is a cost policy, not a claim that a benchmark proves one model is universally best. Outside development, the customer can explicitly select an enabled GPT/Claude OpenRouter coding model with its corresponding estimate. Manual selection can override backend/architecture roles; ordinary web frontend stays with GPT, and research remains the inexpensive specialist. The client cannot claim a higher subscription tier. `STRIPE_PLAN_NAME` associates the configured server-side Stripe price with economy, balanced or pro; a multi-price commercial catalog is still future work. Prices and enabled model IDs are operator configuration snapshotted at enqueue time.
 
 Automatic requests start with a role inferred from the request and supported runtime. The agent can switch roles through a validated tool; it cannot choose an arbitrary model ID. Economy tic-tac-toe builds allow ten model calls and 210 seconds of compute; other jobs allow twelve calls. Economy simple jobs use 28 KB of context and 240 seconds of compute, other economy jobs 32 KB and 300 seconds; higher tiers use 40 KB and 600 seconds. Luna uses low reasoning effort and at most 4,000 output tokens per call. Research consumes the same call budget and allows at most two searches. Context budgets include the actual instructions overhead. Source storage, browser steps and runtime are capped. There is no invisible fallback to a more expensive model.
 

@@ -15,7 +15,7 @@ async function register(page) {
   });
   await page.reload();
 }
-async function agentFixture(page, blocking) {
+async function agentFixture(page, blocking, idea = 'Build an appointment planner for my agency') {
   let phase = 'new',
     projectId,
     estimates = 0,
@@ -23,7 +23,6 @@ async function agentFixture(page, blocking) {
     answered = false;
   const jobId = randomUUID(),
     questionId = randomUUID();
-  const idea = 'Build an appointment planner for my agency';
   await page.route('**/v1/ai/estimate', async (route) => {
     estimates++;
     const data = route.request().postDataJSON();
@@ -284,10 +283,67 @@ test('login remains static and minimal sidebar controls and light glass stay bor
   }
   await expect(page.locator('.project-composer')).toHaveCSS(
     'background-color',
-    'rgba(255, 255, 255, 0.76)',
+    'rgba(255, 255, 255, 0.36)',
   );
   await expect(page.locator('.project-library-grid')).toHaveCount(0);
   await page.screenshot({ path: '.local/new-project-light-minimal.png', animations: 'disabled' });
+});
+test('chat uses compact unlabelled user bubbles, neutral gray themes and translucent light glass', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(
+    page,
+    undefined,
+    'Build an appointment planner for my agency. Keep the customer bookings clear, give each appointment a time and a customer name, and make the entire application easy to use on a phone.',
+  );
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.locator('iframe')).toBeVisible();
+  await page.getByRole('button', { name: 'Close app preview' }).click();
+  for (const theme of ['dark', 'light']) {
+    await expect(page.locator('.project-chat')).toHaveCSS(
+      'background-color',
+      theme === 'dark' ? 'rgb(24, 24, 26)' : 'rgb(237, 237, 240)',
+    );
+    await expect(page.getByText('YOU', { exact: true })).toHaveCount(0);
+    const bubble = page.locator('.chat-message.user > p').first();
+    await expect(bubble).toBeVisible();
+    await expect(bubble).toHaveCSS(
+      'color',
+      theme === 'dark' ? 'rgb(245, 245, 245)' : 'rgb(19, 19, 22)',
+    );
+    await expect(page.locator('.chat-message.assistant > p').first()).toHaveCSS(
+      'color',
+      theme === 'dark' ? 'rgb(245, 245, 245)' : 'rgb(19, 19, 22)',
+    );
+    expect((await bubble.boundingBox()).width).toBeLessThanOrEqual(460);
+    await expect(page.locator('.credit-box')).toHaveCSS('border-width', '0px');
+    await expect(page.locator('.chat-composer')).toHaveCSS('border-width', '0px');
+    await expect(page.locator('.chat-composer')).toHaveCSS('backdrop-filter', /blur\(24px\)/);
+    if (theme === 'light') {
+      await expect(page.locator('.chat-composer')).toHaveCSS(
+        'background-color',
+        'rgba(255, 255, 255, 0.36)',
+      );
+      await expect(page.locator('.chat-composer')).toHaveCSS('background-image', /linear-gradient/);
+    }
+    await page.screenshot({
+      path: '.local/chat-contrast-' + theme + '.png',
+      animations: 'disabled',
+    });
+    if (theme === 'dark')
+      await page.getByRole('button', { name: 'Switch to light mode', exact: true }).click();
+  }
+  await page.getByRole('button', { name: 'New project', exact: true }).click();
+  await expect
+    .poll(() => page.locator('.earth-current').evaluate((image) => image.naturalWidth))
+    .toBeGreaterThan(1000);
+  await expect(page.locator('.earth-current')).toHaveCSS('opacity', '1');
+  await expect(page.locator('.project-composer')).toHaveCSS('background-image', /linear-gradient/);
+  await page.screenshot({ path: '.local/home-glass-light.png', animations: 'disabled' });
+  await page.setViewportSize({ width: 390, height: 700 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 test('public hosting is blocked until ready and requires approval of the reviewed revision', async ({
   page,

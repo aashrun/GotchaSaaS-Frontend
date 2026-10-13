@@ -32,6 +32,7 @@ export default function ProjectChat({ id }) {
   const { refreshNavigation } = useOutletContext();
   const [params, setParams] = useSearchParams();
   const { data, error, reload } = useData('/projects/' + id);
+  const { data: configuration } = useData('/config');
   const [draft, setDraft] = useState(''),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(() =>
@@ -347,7 +348,7 @@ export default function ProjectChat({ id }) {
           )}
           {data.messages.map((message) => (
             <div key={message.id} className={'chat-message ' + message.role}>
-              <span>{message.role === 'user' ? 'YOU' : 'GOTCHA SAAS'}</span>
+              {message.role !== 'user' && <span>GOTCHA SAAS</span>}
               <p>{message.content}</p>
               {message.jobId && message.role === 'user' && (
                 <JobActivity
@@ -488,7 +489,9 @@ export default function ProjectChat({ id }) {
                 onBusy={setReferenceBusy}
                 disabled={busy || !!active || !canEdit}
               />
-              <span className="chat-routing-label">Auto · specialists</span>
+              <span className="chat-routing-label">
+                {configuration?.codingPolicy?.developmentOnly ? 'GPT-6 Luna' : 'Auto · specialists'}
+              </span>
               <div className="composer-send-tools">
                 <VoiceInput
                   disabled={busy || !canEdit}

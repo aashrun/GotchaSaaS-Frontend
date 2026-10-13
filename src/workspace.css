@@ -3,7 +3,9 @@
   color-scheme: dark;
   --bg: #000;
   --sidebar: #000;
-  --surface: #161617;
+  --surface: #28282b;
+  --chat-bg: #18181a;
+  --chat-bubble: #303034;
   --panel: #090909;
   --text: #f5f5f5;
   --muted: #a3a3aa;
@@ -22,11 +24,13 @@
   color-scheme: light;
   --bg: #fff;
   --sidebar: #fff;
-  --surface: #f5f5f6;
+  --surface: #dedee2;
+  --chat-bg: #ededf0;
+  --chat-bubble: #dedee2;
   --panel: #fff;
   --text: #131316;
-  --muted: #6b6b75;
-  --subtle: #6b6b75;
+  --muted: #60606a;
+  --subtle: #60606a;
   --border: #dfdfe3;
   --accent: #131316;
   --mint: #346d52;
@@ -234,7 +238,8 @@ summary:focus-visible {
   margin: 0 0 16px;
   background: var(--surface);
   padding: 12px;
-  border-color: var(--border);
+  border: 0;
+  box-shadow: none;
   border-radius: 9px;
 }
 .credit-box > div:first-child span,
@@ -2117,7 +2122,7 @@ summary:focus-visible {
   --glass: rgba(8, 8, 8, 0.75);
 }
 [data-theme='light'] {
-  --glass: rgba(255, 255, 255, 0.76);
+  --glass: rgba(255, 255, 255, 0.36);
 }
 .workspace-main,
 .workspace-main .earth-backdrop {
@@ -2178,6 +2183,38 @@ summary:focus-visible {
     .connector-plan-grid article
   ) {
   border-radius: 22px;
+}
+[data-theme='light'] .project-composer,
+[data-theme='light'] .studio-composer,
+[data-theme='light']
+  .workspace-layout
+  :is(
+    .panel,
+    .notice,
+    .info-card,
+    .integration-card,
+    .template-card,
+    .library-project,
+    .empty-state,
+    .connector-plan-grid article
+  ) {
+  background-image: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.48),
+    rgba(255, 255, 255, 0.12) 52%,
+    rgba(255, 255, 255, 0.28)
+  );
+  box-shadow:
+    inset 0 0 24px #ffffff30,
+    0 12px 36px #17203312;
+}
+.project-composer,
+.studio-composer {
+  background-color: rgba(25, 25, 26, 0.72);
+}
+[data-theme='light'] .project-composer,
+[data-theme='light'] .studio-composer {
+  background-color: var(--glass);
 }
 .earth-subdued .earth-veil {
   background: linear-gradient(180deg, #000000d9, #000000a8 55%, #000000c9);
@@ -2246,7 +2283,8 @@ summary:focus-visible {
   ) {
   border: 0;
 }
-.workspace-layout :is(input, select) {
+.workspace-layout :is(input, select),
+.workspace-layout .form-stack textarea {
   background: var(--surface);
 }
 .workspace-layout :is(.session-row, .member-row) {
@@ -2361,7 +2399,7 @@ summary:focus-visible {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 54px minmax(0, 1fr);
-  background: var(--bg);
+  background: var(--chat-bg);
   color: var(--text);
 }
 .project-chat-header {
@@ -2394,7 +2432,7 @@ summary:focus-visible {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 34px max(24px, calc((100% - 700px) / 2)) 24px;
+  padding: 34px max(24px, calc((100% - 640px) / 2)) 24px;
   scrollbar-width: none;
 }
 .project-conversation::-webkit-scrollbar {
@@ -2413,20 +2451,26 @@ summary:focus-visible {
   color: var(--muted);
 }
 .project-conversation .chat-message p {
+  color: var(--text);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.75;
   font-size: 14px;
 }
+.conversation .chat-message p {
+  color: var(--text);
+}
 .project-conversation .chat-message.user > p {
+  width: fit-content;
+  max-width: min(80%, 460px);
   padding: 14px 18px;
   border-radius: 20px;
-  background: var(--surface);
-  margin-top: 10px;
+  background: var(--chat-bubble);
+  margin: 0 0 14px auto;
 }
 .chat-composer-wrap {
   width: 100%;
-  max-width: 750px;
+  max-width: 688px;
   margin: 0 auto;
   padding: 0 24px 18px;
 }
@@ -2434,7 +2478,6 @@ summary:focus-visible {
   margin: 0;
   width: 100%;
   max-width: none;
-  box-shadow: 0 8px 32px #0000000b;
 }
 .chat-composer textarea {
   height: 52px;
@@ -2755,9 +2798,11 @@ summary:focus-visible {
 }
 
 .chat-answer {
+  width: fit-content;
+  max-width: min(80%, 460px);
   font-size: 12px;
   padding: 12px 16px;
-  margin: 16px 0;
+  margin: 16px 0 16px auto;
   border-radius: 16px;
   background: var(--surface);
 }
