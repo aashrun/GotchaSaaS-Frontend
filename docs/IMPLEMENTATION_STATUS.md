@@ -10,6 +10,7 @@ Updated 14 October 2026. The local integration workspace runs React/Vite on port
 - OpenRouter Responses agent loop with strict server-validated file/search/write/check/browser/research/memory/repository/action tools. Native function result continuity, durable steps/candidates, role routing, bounded context/outputs/calls/compute, worker lease fencing and safe checkpoint resume.
 - Continuous workspace chat with direct bounded build submission, real pulsing tool activity and verified right-side preview; a separate project library keeps New Project uncluttered. Requester-scoped durable question/answer tools support blocking checkpoints and deferred source writes during independent work. Login stays within the viewport; selected navigation, pastel buttons and collapse controls are borderless in both themes.
 - Compact user bubbles without a sender label, readable theme-aware chat text, dark/light gray conversation surfaces, visible light glass over the cloud background, stronger input contrast and borderless pinned credits.
+- Shared deep-black glossy home/chat composers and borderless attachment menus that dismiss on outside click, focus departure or Escape. Chat and Studio menus open above the composer to preserve the typing area and viewport visibility.
 - Development-only GPT-6 Luna policy across all coding/research roles and both generation engines, enforced before reservation, sandbox startup and provider dispatch. Production retains subscription-bound specialist routing; Jev remains a documented evaluation strategy rather than a live routing dependency.
 - Root-owned E2B tools and dependency image with denied internet/public ingress, unprivileged generated-code processes, real Chromium and isolated PostgreSQL.
 - Express/PostgreSQL full-stack starter with signup/login, persistent records, per-user authorization, protected acceptance checks, browser assertions and screenshots. Opaque-origin preview with an authenticated localhost API broker and explicit five-minute credit lease.
@@ -22,7 +23,7 @@ Updated 14 October 2026. The local integration workspace runs React/Vite on port
 | Check                                       | Result                                                                                       |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | Backend unit/PostgreSQL/security tests      | 74 passed, zero failures                                                                     |
-| Browser workflows                           | 16 passed across the suite and focused reruns, zero unresolved failures                      |
+| Browser workflows                           | 17 passed across the recent suite and focused reruns, zero unresolved failures               |
 | Syntax and production build                 | Passed                                                                                       |
 | npm production and sandbox dependency audit | Zero vulnerabilities reported                                                                |
 | Migrations 006–008 down/up                  | Existing source preserved on isolated migration DB                                           |

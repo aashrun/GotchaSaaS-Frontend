@@ -3,7 +3,7 @@
 Use Node 22+, PostgreSQL and the installed Chrome browser.
 
 - `npm test`: 74 passing backend integration/security/transport tests; 9 optional live-provider tests explicitly skipped; 0 failures. The script explicitly uses `NODE_ENV=test`; policy fixtures separately exercise development and production.
-- `npm run test:e2e`: 16 browser workflows passed across the full suite and a focused rerun; 0 unresolved failures. The focused run corrected an outdated light-glass opacity assertion and repeated dictation after the isolated API reached its normal rate-limit window. Rate limits were retained.
+- `npm run test:e2e`: 17 browser workflows passed across the recent full suite and focused reruns; 0 unresolved failures. The focused runs corrected an outdated light-glass opacity assertion, repeated dictation after the isolated API reached its normal rate-limit window, and verified the corrected attachment menu. Rate limits were retained.
 - `npm run check`: JavaScript syntax, production frontend build and five curated frontend template builds.
 - `npm audit`: zero reported vulnerabilities after patched UUID and DOMPurify overrides. These overrides deliberately update vulnerable transitive versions and are covered by runtime tests.
 - The original five migrations passed up/down/up on a dedicated empty database; migrations 006–008 also preserved existing source on an isolated migration database. Shared-history downgrade intentionally refuses to remove actor nullability while anonymous records exist. Current fixture databases use the current migrations, including 009.
@@ -29,6 +29,8 @@ The browser folder workflow covers creation, one-step project entry, reload-pers
 The sidebar flow verifies persisted desktop collapse, visible credits in the compact rail and expanded/mobile sidebar, credits remaining pinned during navigation scrolling, folded Manage links and top-right appearance controls.
 
 Chat contrast checks verify no user sender label, user bubble width at most 460px, readable message colors, gray chat surfaces, borderless credits and translucent blurred light composers. Fresh dark/light chat and decoded-cloud home screenshots are retained only in the ignored local test output. Development policy fixtures verify that paid subscriptions, premium manual selection and 3D cannot override Luna, that missing Luna blocks generation, and that forbidden models are rejected before any provider request.
+
+Attachment menu checks verify outside-click and Escape dismissal, focus returning to the plus control, no menu borders in either theme, and placement above the entire chat composer at 1440×1000, 1024×500 and 390×700. They also verify that the dark chat and New Project composers share the same deep-black glass background and sheen. The existing text/image upload and reference persistence workflow passes separately. All these checks use fixture builds without paid provider calls.
 
 The Gotcha composer workflow verifies personalized greetings changing on a new project, the smaller circular upward send control and adjacent microphone, server-normalized image/text references, home-to-chat handoff and reload persistence, removal, project search including no results, collapsible Recents and the connector roadmap. Backend reference checks exercise actual image decoding/resizing, metadata and appended payload removal, MIME forgery, invalid formats, credentials, quota rejection, untrusted multimodal context and increased credit reservations. No paid image-understanding request is made by these tests.
 

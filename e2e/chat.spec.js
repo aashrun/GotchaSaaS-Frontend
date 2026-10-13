@@ -304,7 +304,7 @@ test('chat uses compact unlabelled user bubbles, neutral gray themes and translu
   for (const theme of ['dark', 'light']) {
     await expect(page.locator('.project-chat')).toHaveCSS(
       'background-color',
-      theme === 'dark' ? 'rgb(24, 24, 26)' : 'rgb(237, 237, 240)',
+      theme === 'dark' ? 'rgb(23, 23, 23)' : 'rgb(237, 237, 240)',
     );
     await expect(page.getByText('YOU', { exact: true })).toHaveCount(0);
     const bubble = page.locator('.chat-message.user > p').first();
@@ -344,6 +344,68 @@ test('chat uses compact unlabelled user bubbles, neutral gray themes and translu
   await page.screenshot({ path: '.local/home-glass-light.png', animations: 'disabled' });
   await page.setViewportSize({ width: 390, height: 700 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+test('attachment menus dismiss outside and stay above the bottom chat composer in both themes', async ({
+  page,
+}) => {
+  await register(page);
+  const attach = page.getByLabel('Add files or images');
+  const menu = page.locator('.reference-menu');
+  const home = page.getByLabel('Describe your app idea');
+  await attach.click();
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveCSS('border-width', '0px');
+  await home.click();
+  await expect(menu).not.toBeVisible();
+  await attach.click();
+  await attach.press('Escape');
+  await expect(menu).not.toBeVisible();
+  await expect(attach).toBeFocused();
+  const homeGlass = await page.locator('.project-composer').evaluate((el) => ({
+    color: getComputedStyle(el).backgroundColor,
+    sheen: getComputedStyle(el).backgroundImage,
+  }));
+  expect(homeGlass.color).toBe('rgba(5, 5, 6, 0.9)');
+  const fixture = await agentFixture(page);
+  await home.fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.locator('iframe')).toBeVisible();
+  await page.getByRole('button', { name: 'Close app preview' }).click();
+  const chat = page.getByLabel('Ask Gotcha to build or edit your app');
+  await expect(page.locator('.chat-composer')).toHaveCSS('background-color', homeGlass.color);
+  await expect(page.locator('.chat-composer')).toHaveCSS('background-image', homeGlass.sheen);
+  for (const theme of ['dark', 'light']) {
+    for (const [width, height] of [
+      [1440, 1000],
+      [1024, 500],
+      [390, 700],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await attach.click();
+      await expect(menu).toBeVisible();
+      await expect(menu).toHaveCSS('border-width', '0px');
+      await expect(menu.getByRole('button', { name: 'Add a text file' })).toBeVisible();
+      await expect(menu.getByRole('button', { name: 'Add an image' })).toBeVisible();
+      const bounds = await menu.boundingBox();
+      const trigger = await attach.boundingBox();
+      const composer = await page.locator('.chat-composer').boundingBox();
+      expect(bounds.y).toBeGreaterThanOrEqual(0);
+      expect(bounds.y + bounds.height).toBeLessThan(trigger.y);
+      expect(bounds.y + bounds.height).toBeLessThan(composer.y);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+      await chat.click();
+      await expect(menu).not.toBeVisible();
+    }
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await attach.click();
+    await page.screenshot({
+      path: '.local/chat-attachments-' + theme + '.png',
+      animations: 'disabled',
+    });
+    await attach.press('Escape');
+    if (theme === 'dark')
+      await page.getByRole('button', { name: 'Switch to light mode', exact: true }).click();
+  }
 });
 test('public hosting is blocked until ready and requires approval of the reviewed revision', async ({
   page,

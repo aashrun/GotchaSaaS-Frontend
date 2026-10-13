@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Plus, FileText, Image, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
@@ -35,6 +35,25 @@ export default function PromptReferences({ references, onChange, onBusy, disable
     menu = useRef(null),
     pending = useRef(false);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    function dismissOutside(event) {
+      if (menu.current?.open && !menu.current.contains(event.target)) menu.current.open = false;
+    }
+    function dismissEscape(event) {
+      if (event.key === 'Escape' && menu.current?.open) {
+        menu.current.open = false;
+        menu.current.querySelector('summary')?.focus();
+      }
+    }
+    document.addEventListener('pointerdown', dismissOutside);
+    document.addEventListener('focusin', dismissOutside);
+    document.addEventListener('keydown', dismissEscape);
+    return () => {
+      document.removeEventListener('pointerdown', dismissOutside);
+      document.removeEventListener('focusin', dismissOutside);
+      document.removeEventListener('keydown', dismissEscape);
+    };
+  }, []);
   async function attach(event) {
     const files = [...event.target.files];
     event.target.value = '';
