@@ -346,7 +346,7 @@ export default function ProjectChat({ id }) {
           )}
           {data.messages.map((message) => (
             <div key={message.id} className={'chat-message ' + message.role}>
-              <span>{message.role === 'user' ? 'YOU' : 'GOTCHA'}</span>
+              <span>{message.role === 'user' ? 'YOU' : 'GOTCHA SAAS'}</span>
               <p>{message.content}</p>
               {message.jobId && message.role === 'user' && (
                 <JobActivity

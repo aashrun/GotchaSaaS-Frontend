@@ -152,7 +152,7 @@ export default function AgentTools({ projectId, canEdit }) {
           onClick={() =>
             perform(() =>
               api.post(base + '/actions', {
-                title: 'Update application from Gotcha!',
+                title: 'Update application from Gotcha SaaS',
                 description: 'Review the exported application source.',
               }),
             )

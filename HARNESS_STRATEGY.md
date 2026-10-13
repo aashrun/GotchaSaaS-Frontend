@@ -62,3 +62,5 @@ E2B is the cloud computer, not the LLM or complete harness. Its processes can co
 Sources: [E2B persistence](https://docs.e2b.dev/sandbox/persistence), [E2B pricing](https://e2b.dev/pricing), [OpenRouter function calling](https://openrouter.ai/docs/guides/features/tool-calling), [OpenRouter search tools](https://openrouter.ai/docs/guides/features/server-tools/web-search).
 
 Failed jobs still consume the server's funded provider-cost budget even when their customer charge is waived. Increasing a user spending preference cannot create more provider funding. Worker claims use a new execution token; previous workers are fenced from resuming or applying source after ownership changes.
+
+Ordinary web frontend routing now enforces GPT even when a Claude backend model is manually selected. 3D tasks may use the plan-approved Claude specialist. See [current policy and Jev assessment](MODEL_ROUTING.md) and [four-app diagnostic](SOFTWARE_EVALUATION.md).

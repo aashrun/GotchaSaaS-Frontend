@@ -2,7 +2,7 @@
 
 Use Node 22+, PostgreSQL and the installed Chrome browser.
 
-- `npm test`: 71 passing backend integration/security/transport tests; 9 optional live-provider tests explicitly skipped; 0 failures.
+- `npm test`: 72 passing backend integration/security/transport tests; 9 optional live-provider tests explicitly skipped; 0 failures.
 - `npm run test:e2e`: 14 browser workflows passed across the full suite and a focused rerun; 0 unresolved failures. A transient detached-panel style read in the Manage check was replaced with Playwright's retrying CSS assertion and the focused workflow passed.
 - `npm run check`: JavaScript syntax, production frontend build and five curated frontend template builds.
 - `npm audit`: zero reported vulnerabilities after patched UUID and DOMPurify overrides. These overrides deliberately update vulnerable transitive versions and are covered by runtime tests.

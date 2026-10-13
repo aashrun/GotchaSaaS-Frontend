@@ -92,7 +92,7 @@ export default function Team() {
         >
           <h3>Add a member</h3>
           <p className="muted">
-            They must already have a verified Gotcha! account. No invitation email is sent.
+            They must already have a verified Gotcha SaaS account. No invitation email is sent.
           </p>
           <label>
             Email address

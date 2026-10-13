@@ -1,4 +1,4 @@
-# Gotcha! SaaS frontend
+# Gotcha SaaS frontend
 
 React 19 / Vite 8 builder interface. Companion API: [GotchaSaaS-Backend](https://github.com/aashrun/GotchaSaaS-Backend).
 
@@ -25,6 +25,6 @@ Build automatically compiles the trusted template source in `templates/` into ig
 
 Browser tests require a running isolated frontend/backend, Chrome and MAIL_MODE=local. Use DEV_API_TARGET for a separate API port and E2E_APP_ORIGIN for its frontend origin. They create and remove synthetic browser accounts, mock paid generation/transcription, and do not launch paid builds. Do not run them against live email delivery. See EMAIL_VERIFICATION.md for the isolated setup.
 
-Gotcha! uses the original Classic Quality wordmark and Gotcha Games favicon. All other text uses Arial. Themes have an inset borderless rounded Earth/cloud canvas, pinned credits, smooth collapsible navigation, project search, rotating personalized greetings, compact voice/send controls, and validated text/image references. `design-assets/` documents asset provenance. The image catalog rotates at login and every two hours.
+Gotcha SaaS uses the original Classic Quality wordmark and Gotcha Games favicon. All other text uses Arial. Themes have an inset borderless rounded Earth/cloud canvas, pinned credits, smooth collapsible navigation, project search, rotating personalized greetings, compact voice/send controls, and validated text/image references. `design-assets/` documents asset provenance. The image catalog rotates at login and every two hours.
 
 See [CONNECTORS.md](CONNECTORS.md) for connector status/planning and reference limits; [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for folder and app organization. Shared architecture documents describe the integrated system; run commands above apply to this standalone repository.

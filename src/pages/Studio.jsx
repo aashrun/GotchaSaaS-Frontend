@@ -541,7 +541,7 @@ export default function Studio() {
               )}
               {data.messages.map((m) => (
                 <article className={'chat-message ' + m.role} key={m.id}>
-                  <span>{m.role === 'user' ? 'YOU' : 'GOTCHA!'}</span>
+                  <span>{m.role === 'user' ? 'YOU' : 'GOTCHA SAAS'}</span>
                   <p>{m.content}</p>
                 </article>
               ))}

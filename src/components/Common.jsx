@@ -18,9 +18,10 @@ export function Logo({ compact = false }) {
     <Link
       className={'logo gotcha-wordmark' + (compact ? ' logo-compact' : '')}
       to="/"
-      aria-label="Gotcha! home"
+      aria-label="Gotcha SaaS home"
     >
-      <span>Gotcha!</span>
+      <span>Gotcha </span>
+      <small className="saas-brand">SaaS</small>
     </Link>
   );
 }
@@ -118,7 +119,9 @@ export function Modal({ open, onOpenChange, title, description, children }) {
         <Dialog.Overlay className="dialog-overlay" />
         <Dialog.Content className="dialog-content">
           <Dialog.Title>{title}</Dialog.Title>
-          <Dialog.Description>{description || 'Manage your Gotcha! workspace.'}</Dialog.Description>
+          <Dialog.Description>
+            {description || 'Manage your Gotcha SaaS workspace.'}
+          </Dialog.Description>
           <Dialog.Close aria-label="Close dialog" className="dialog-close">
             <X size={18} />
           </Dialog.Close>

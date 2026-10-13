@@ -98,7 +98,7 @@ test('login uses a sharp still Earth image and a cloud image in light mode', asy
     if (request.url().endsWith('.mp4')) mediaRequests.push(request.url());
   });
   await page.goto('/auth/login');
-  await expect(page.locator('.auth-form > .logo')).toHaveText('Gotcha!');
+  await expect(page.locator('.auth-form > .logo')).toHaveText('Gotcha SaaS');
   await expect(page.locator('.auth-form > .logo img, .auth-form > .logo svg')).toHaveCount(0);
   await expect(page.getByText('NEBULA STUDIO', { exact: true })).toHaveCount(0);
   const image = page.locator('.planet-scene img');
@@ -138,7 +138,7 @@ test('Earth workspace themes, rotation and sidebar footer work at every viewport
   await expect.poll(() => earth.evaluate((image) => image.naturalWidth)).toBeGreaterThan(1000);
   await expect(page.locator('.workspace-topbar')).toHaveCount(0);
   await expect(page.locator('.sidebar')).toHaveCSS('background-color', 'rgb(0, 0, 0)');
-  await expect(page.locator('.sidebar .logo')).toHaveText('Gotcha!');
+  await expect(page.locator('.sidebar .logo')).toHaveText('Gotcha SaaS');
   await expect(page.locator('.sidebar .logo img, .sidebar .logo svg')).toHaveCount(0);
   await expect(page.locator('.sidebar .logo')).toHaveCSS(
     'font-family',

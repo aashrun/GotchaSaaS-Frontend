@@ -23,7 +23,7 @@ export default function App() {
         fallback={
           <div className="page-loading">
             <span className="orbit-loader" />
-            Opening Gotcha!…
+            Opening Gotcha SaaS…
           </div>
         }
       >
