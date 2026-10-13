@@ -8,6 +8,8 @@ Customer code never runs in the API, local Node process or local shell. Only rev
 
 Source paths reject absolute paths, traversal, dotfiles, unsupported executable extensions, node_modules and build/output directories. File count, bytes and individual edits are capped. Protected package/entry/runtime configuration, runtime bridge and acceptance tests cannot be unlocked. Candidate writes are validated independently of model instructions. Build/browser evidence resets on edits, and final source application requires the current revision and permissions.
 
+Failed source candidates may be reused only for the same requester/project at the unchanged revision, with no ambiguous provider/tool step. Source validation runs again and all validation evidence is discarded. The browser driver and tic-tac-toe acceptance protocol are installed as root-owned platform code; customer source cannot replace them. The static browser runs the actual compiled artifact and blocks external requests.
+
 Arbitrary archive/binary uploads are unsupported. The text-reference control is bounded and server text validation applies to the resulting prompt. Dictation accepts only canonical bounded PCM WAV, never a URL or arbitrary uploaded document. A signature check is not a full antivirus scanner. No ClamAV service is claimed to be running; adding generic binary uploads requires quarantine and real antivirus/content-disarm scanning before enabling them.
 
 ## Browser and network
@@ -21,6 +23,8 @@ Public research accepts HTTPS on port 443 without URL credentials. It resolves a
 Backend environment files are ignored and private. Stored connector credentials use authenticated AES-256-GCM encryption. The agent never receives those credentials. GitHub repository reads reject potential credentials. Actions snapshot repository, branch, source revision, files and digest for owner review. Only the owner approval endpoint may perform the external write. It claims each action once and records ambiguous outcomes instead of blindly retrying a branch/commit/PR operation. A changed connection or source invalidates approval.
 
 Provider calls have explicit bounds and no automatic paid retries. An interrupted in-flight call/tool pauses with an unknown outcome and blocks resume. Known safe checkpoints can resume; cancellation settles once. Voice request IDs prevent duplicate billing, and failures release reservations. A fixed-duration preview lease limits compute independently of model calls. Deleting a project/account attempts to remove its sandboxes, and live tests remove their synthetic fixtures.
+
+Publication requires an explicit owner review of the exact current validated revision, an active subscription, enabled paid resources and configured hosting. The API checks the reviewed revision under lock before enqueue, and the worker checks it again before deployment. Configuration failure is rejected before marking an external request dispatched. Readiness does not expose provider credentials or perform a public upload.
 
 ## Remaining deployment work
 

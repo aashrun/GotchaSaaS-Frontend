@@ -265,6 +265,63 @@ test('login remains static and minimal sidebar controls and light glass stay bor
   await expect(page.locator('.project-library-grid')).toHaveCount(0);
   await page.screenshot({ path: '.local/new-project-light-minimal.png', animations: 'disabled' });
 });
+test('public hosting is blocked until ready and requires approval of the reviewed revision', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(page);
+  let ready = false,
+    approved = null;
+  await page.route('**/v1/resources/*/publication', (route) =>
+    route.fulfill({
+      json: {
+        ready,
+        revision: 0,
+        url: ready ? 'https://app.example.test' : null,
+        provider: 'cloudflare',
+        reasons: ready ? [] : ['Cloudflare hosting is not configured.'],
+        operations: approved
+          ? [{ id: randomUUID(), state: 'succeeded', result: { url: 'https://app.example.test' } }]
+          : [],
+      },
+    }),
+  );
+  await page.route('**/v1/resources', async (route) => {
+    expect(route.request().method()).toBe('POST');
+    approved = route.request().postDataJSON();
+    await route.fulfill({ status: 202, json: { operation: { state: 'pending' } } });
+  });
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.locator('iframe')).toBeVisible();
+  await page.getByRole('button', { name: 'Publish app', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Review publication' })).toBeDisabled();
+  await expect(page.getByText('Cloudflare hosting is not configured.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Download playable app' })).toBeVisible();
+  expect(approved).toBeNull();
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click();
+  ready = true;
+  await page.getByRole('button', { name: 'Publish app', exact: true }).click();
+  await page.getByRole('button', { name: 'Review publication' }).click();
+  const review = page.getByRole('dialog', { name: 'Publish this app publicly?' });
+  await expect(review).toContainText('Revision 0 will be uploaded to Cloudflare');
+  await expect(review).toContainText('https://app.example.test');
+  expect(approved).toBeNull();
+  await review.getByRole('button', { name: 'Close dialog', exact: true }).click();
+  expect(approved).toBeNull();
+  await page.getByRole('button', { name: 'Review publication' }).click();
+  await review.getByRole('button', { name: 'Approve public deployment' }).click();
+  await expect(review).toHaveCount(0);
+  expect(approved).toMatchObject({
+    projectId: new URL(page.url()).searchParams.get('chat'),
+    kind: 'deployment',
+    provider: 'cloudflare',
+    revision: 0,
+    confirmation: 'APPROVE PAID RESOURCE',
+  });
+  expect(approved.idempotencyKey).toMatch(/^[a-f0-9-]{36}$/);
+  await expect(page.getByRole('link', { name: 'https://app.example.test' })).toBeVisible();
+});
 test.afterEach(async ({ page }) => {
   const response = await page.request.get('/v1/auth/me');
   if (response.status() !== 200) return;

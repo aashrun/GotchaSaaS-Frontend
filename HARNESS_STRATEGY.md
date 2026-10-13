@@ -24,7 +24,7 @@ Tools include file listing, reading, literal search, bounded source editing, Typ
 
 The full-stack starter runs Express and PostgreSQL inside the same isolated microVM. Generated code receives only that app database credential. It never receives the platform database URI, OpenRouter key, E2B key, Stripe credentials or repository token. Protected backend acceptance checks exercise signup, invalid login, valid login, records surviving logout/login, and cross-user reads/deletes. These checks establish the recorded behavior; they are not a complete security audit of arbitrary generated code.
 
-Completion requires successful checks and visible browser assertions on the current files. Editing files invalidates evidence. Files apply transactionally only after revision, cancellation and permission checks. Screenshots and tool observations can be inspected under Studio → Memory & actions. A passing assertion does not prove every item in a user request; the summary must describe the actual coverage.
+Completion requires successful checks and visible browser assertions on the current files. Interactive apps require real interactions and multiple assertions. Tic-tac-toe uses a platform-owned `game_test` protocol that checks all X/O winning lines, draw, restart, occupied cells, game-over locking, keyboard play and mobile overflow. Static checks run against the compiled artifact without external font/network dependencies. Editing files invalidates evidence. Once current checks pass and all questions are answered, the provider is forced to call the finish tool. Files apply transactionally only after revision, cancellation and permission checks. Screenshots and tool observations are saved with job evidence. A passing assertion does not prove every item in a user request; the summary must describe the actual coverage.
 
 ## Models and customer plans
 
@@ -37,7 +37,7 @@ Completion requires successful checks and visible browser assertions on the curr
 
 This is a cost policy, not a claim that a benchmark proves one model is universally best. The customer can explicitly select an enabled OpenRouter model instead, with its larger estimate. Manual selection applies to implementation roles; research remains the inexpensive specialist. The client cannot claim a higher subscription tier. `STRIPE_PLAN_NAME` associates the configured server-side Stripe price with economy, balanced or pro; a multi-price commercial catalog is still future work. Prices and enabled model IDs are operator configuration snapshotted at enqueue time.
 
-Automatic requests start with a role inferred from the request and supported runtime. The agent can switch roles through a validated tool; it cannot choose an arbitrary model ID. Economy allows eight model calls, other tiers twelve. Research consumes the same call budget and allows at most two searches. Context, output tokens, source storage, browser steps and runtime are capped. There is no invisible fallback to a more expensive model.
+Automatic requests start with a role inferred from the request and supported runtime. The agent can switch roles through a validated tool; it cannot choose an arbitrary model ID. Economy tic-tac-toe builds allow ten model calls and 210 seconds of compute; other jobs allow twelve calls. Economy simple jobs use 28 KB of context and 240 seconds of compute, other economy jobs 32 KB and 300 seconds; higher tiers use 40 KB and 600 seconds. Luna uses low reasoning effort and at most 4,000 output tokens per call. Research consumes the same call budget and allows at most two searches. Context budgets include the actual instructions overhead. Source storage, browser steps and runtime are capped. There is no invisible fallback to a more expensive model.
 
 ## Cost meter
 
@@ -52,6 +52,8 @@ Commercial pricing should fund model usage, compute, the shared E2B plan, databa
 Project memory uses the existing PostgreSQL database: bounded requirements, decisions, research and notes, each with provenance and a revision. No additional memory SaaS is required. It is tenant-scoped data, never system authority.
 
 Every provider call and tool batch has a durable step record; source candidates, observations, specialist selection and evidence are checkpointed. A stopped worker pauses an agent job. The requester can resume a known safe checkpoint. An in-flight provider or mutating-tool outcome is ambiguous; resume is blocked to avoid duplicating paid calls or writes. The requester can cancel and release the reservation. External actions similarly record unknown outcomes instead of silently retrying.
+
+A new attempt may reuse a saved candidate from the same requester's failed job at the unchanged project revision. It rejects ambiguous in-flight steps, revalidates protected paths, secrets and quotas, creates a fresh isolated workspace, and reruns all checks. It does not apply failed source or reuse old evidence. Prior answered questions supply context so the user does not repeat the same intake answer.
 
 ## Cloud operation
 

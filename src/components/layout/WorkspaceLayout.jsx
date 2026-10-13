@@ -59,6 +59,11 @@ export default function WorkspaceLayout() {
     [searchLoading, setSearchLoading] = useState(false),
     [searchError, setSearchError] = useState('');
   const [themeBusy, setThemeBusy] = useState(false);
+  useEffect(() => {
+    if (!data?.account.reserved) return;
+    const timer = setInterval(reloadBilling, 6000);
+    return () => clearInterval(timer);
+  }, [data?.account.reserved]);
   const chat =
     location.pathname === '/projects' && new URLSearchParams(location.search).has('chat');
   const overview = ['/dashboard', '/projects'].includes(location.pathname) && !chat;
@@ -68,7 +73,7 @@ export default function WorkspaceLayout() {
     [folderMenu, setFolderMenu] = useState(null),
     [deleteFolder, setDeleteFolder] = useState(null);
   const folders = folderData?.folders || [];
-  const refreshNavigation = () => Promise.all([reloadFolders(), reloadProjects()]);
+  const refreshNavigation = () => Promise.all([reloadFolders(), reloadProjects(), reloadBilling()]);
   function setSidebarCollapsed(value) {
     setCollapsed(value);
     localStorage.setItem(preferenceKey, String(value));

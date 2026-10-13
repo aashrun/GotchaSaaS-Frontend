@@ -502,9 +502,7 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
       for (const panel of await panels.all()) {
         await expect(panel).toHaveCSS('border-top-width', '0px');
         await expect(panel).toHaveCSS('padding', '24px');
-        expect(await panel.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain(
-          'blur(24px)',
-        );
+        await expect(panel).toHaveCSS('backdrop-filter', /blur\(24px\)/);
         await expect(panel).toHaveCSS(
           'background-color',
           theme === 'dark' ? 'rgba(8, 8, 8, 0.75)' : 'rgba(255, 255, 255, 0.76)',

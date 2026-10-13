@@ -18,6 +18,8 @@ The initial adapter uses [Workers for Platforms dispatch scripts](https://develo
 
 The adapter uploads a fixed Worker module serving a validated frontend artifact. It does **not** deploy Express code or claim supported generated server/database authentication. The public URL must pass an actual HTTP smoke test before it is labeled published. An accepted upload with failed routing is recorded `verification_failed` and its external identifier is retained for cleanup.
 
+The preview's Publish control first reads a tenant-scoped readiness plan. Missing provider configuration, disabled paid resources, missing active subscription, insufficient ownership, an active build, an unverified revision or an unresolved deployment operation blocks approval. Review shows the exact source revision and public URL. Only explicit owner approval queues publication, with a revision check and idempotency key. Changing source invalidates that approval. Verified static apps can also be downloaded as an offline HTML file without public hosting.
+
 A minimal dispatch Worker pattern (review, quota-limit and deploy it in your account):
 
 ```js

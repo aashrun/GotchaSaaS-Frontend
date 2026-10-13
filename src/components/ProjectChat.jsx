@@ -7,6 +7,7 @@ import {
   Code2,
   Loader2,
   Monitor,
+  Globe,
   RefreshCw,
   Square,
   X,
@@ -52,6 +53,7 @@ export default function ProjectChat({ id }) {
     [previewOpen, setPreviewOpen] = useState(false),
     [previewKey, setPreviewKey] = useState(0),
     [toolsOpen, setToolsOpen] = useState(false),
+    [toolTab, setToolTab] = useState('source'),
     [lease, setLease] = useState(null);
   const [verificationBusy, setVerificationBusy] = useState(false);
   const started = useRef(false),
@@ -328,7 +330,10 @@ export default function ProjectChat({ id }) {
             className="icon-button"
             aria-label="Show project tools"
             title="Code, checkpoints & connections"
-            onClick={() => setToolsOpen(true)}
+            onClick={() => {
+              setToolTab('source');
+              setToolsOpen(true);
+            }}
           >
             <Code2 size={17} />
           </button>
@@ -543,6 +548,17 @@ export default function ProjectChat({ id }) {
             <div>
               <button
                 className="icon-button"
+                aria-label="Publish app"
+                title="Download or publish app"
+                onClick={() => {
+                  setToolTab('publish');
+                  setToolsOpen(true);
+                }}
+              >
+                <Globe size={15} />
+              </button>
+              <button
+                className="icon-button"
                 aria-label="Reload app preview"
                 onClick={() => setPreviewKey((v) => v + 1)}
               >
@@ -660,7 +676,12 @@ export default function ProjectChat({ id }) {
         description="Your source and checkpoints are saved automatically. Open these when you need more control."
       >
         <Suspense fallback={<p>Opening tools…</p>}>
-          <ProjectTools data={data} reload={reload} canEdit={canEdit && !active} />
+          <ProjectTools
+            data={data}
+            reload={reload}
+            canEdit={canEdit && !active}
+            initialTab={toolTab}
+          />
         </Suspense>
       </Modal>
     </main>

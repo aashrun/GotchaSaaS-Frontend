@@ -4,9 +4,10 @@ import { toast } from 'sonner';
 import api from '../lib/api';
 import { Modal } from './Common';
 import AgentTools from './AgentTools';
+import PublishTools from './PublishTools';
 const CodeEditor = lazy(() => import('./CodeEditor'));
-export default function ProjectTools({ data, reload, canEdit }) {
-  const [tab, setTab] = useState('source'),
+export default function ProjectTools({ data, reload, canEdit, initialTab = 'source' }) {
+  const [tab, setTab] = useState(initialTab),
     [selected, setSelected] = useState('src/App.tsx'),
     [drafts, setDrafts] = useState({}),
     [name, setName] = useState(''),
@@ -34,6 +35,7 @@ export default function ProjectTools({ data, reload, canEdit }) {
           ['versions', 'Checkpoints'],
           ['tests', 'Checks'],
           ['agent', 'Memory & GitHub'],
+          ['publish', 'Publish'],
         ].map(([id, label]) => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>
             {label}
@@ -163,6 +165,7 @@ export default function ProjectTools({ data, reload, canEdit }) {
           ))}
         </div>
       )}
+      {tab === 'publish' && <PublishTools project={project} />}
       {tab === 'agent' && <AgentTools projectId={project.id} canEdit={canEdit} />}
       <Modal
         open={!!restore}

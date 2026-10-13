@@ -19,14 +19,16 @@ Updated 13 October 2026. The local integration workspace runs React/Vite on port
 
 | Check                                       | Result                                                                                       |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Backend unit/PostgreSQL/security tests      | 67 passed, zero failures                                                                     |
-| Browser workflows                           | 13 passed across the suite and focused reruns, zero unresolved failures                      |
+| Backend unit/PostgreSQL/security tests      | 71 passed, zero failures                                                                     |
+| Browser workflows                           | 14 passed across the suite and focused reruns, zero unresolved failures                      |
 | Syntax and production build                 | Passed                                                                                       |
 | npm production and sandbox dependency audit | Zero vulnerabilities reported                                                                |
 | Migrations 006–008 down/up                  | Existing source preserved on isolated migration DB                                           |
 | Real OpenRouter STT call                    | Synthetic English audio transcribed correctly; cost returned                                 |
 | Real E2B backend                            | Signup, rejected invalid login, valid login, persistent CRUD and cross-user isolation passed |
-| Real agent generation                       | Read → write → checks → Chromium assertion/screenshot → finish; source revision applied      |
+| Real agent generation                       | Luna generated tic-tac-toe; compiled checks and 32 game assertions passed; revision applied  |
+| Downloaded game offline                     | Same 32 assertions passed in Chrome offline; HTML and source ZIP retained locally            |
+| Public hosting review                       | Actual configuration blockers shown; explicit revision-bound approval tested with mocks      |
 | Real preview lifecycle                      | Paused sandbox resumed; explicit lease and cookie-isolated API CRUD passed                   |
 | Real network isolation                      | Internet/metadata requests blocked; unauthenticated public ingress returned 403              |
 | Real public research and search             | DNS-pinned Vite docs fetch and OpenRouter bounded search returned source URLs                |
@@ -35,6 +37,8 @@ Updated 13 October 2026. The local integration workspace runs React/Vite on port
 The recorded small end-to-end agent change used GPT-6 Luna for five calls: OpenRouter reported $0.00120540915, elapsed sandbox cost was estimated at $0.002152984, and settlement charged four ledger credits. This is one simple edit, not a price estimate for a complete application or an E2B invoice. Its synthetic project/user/sandbox were removed after verification. Real-user source and credentials were not used for this test.
 
 Known safe checkpoint resume and previous-worker fencing are covered with deterministic service fixtures. Ambiguous provider/tool outcomes block resume and automatic retry. The actual cloud pause/resume and database bridge were separately exercised with live E2B.
+
+The separate real-account tic-tac-toe build required three failed attempts and harness repairs before succeeding. It used $0.0178113771 in provider-reported OpenRouter spend and an estimated $0.018284908 in E2B compute across all attempts, charging six customer credits. The game was played manually in the embedded preview and verified offline after export. See [the build and cost record](LIVE_GAME_VERIFICATION.md). This does not certify the builder for arbitrary production applications.
 
 ## Remaining scope
 
