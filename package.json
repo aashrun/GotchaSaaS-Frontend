@@ -1,0 +1,53 @@
+{
+  "name": "gotcha-saas-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "npm run prepare:templates",
+    "dev": "vite",
+    "build": "npm run prepare:templates && vite build",
+    "prepare:templates": "node scripts/prepare-templates.cjs",
+    "preview": "vite preview",
+    "format:check": "prettier --check .",
+    "test:e2e": "playwright test --config=playwright.config.cjs"
+  },
+  "dependencies": {
+    "@auth0/auth0-react": "^2.17.0",
+    "@monaco-editor/react": "^4.7.0",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-switch": "^1.2.6",
+    "@radix-ui/react-tabs": "^1.1.13",
+    "@radix-ui/react-tooltip": "^1.2.8",
+    "axios": "^1.16.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.460.0",
+    "monaco-editor": "^0.57.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.0.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^2.5.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.0",
+    "prettier": "^3.9.10",
+    "@playwright/test": "^1.56.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1",
+    "dompurify": "^3.4.17"
+  }
+}
