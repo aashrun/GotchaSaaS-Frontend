@@ -2212,32 +2212,34 @@ summary:focus-visible {
     .empty-state,
     .connector-plan-grid article
   ) {
-  background-image: linear-gradient(
+  background-image: var(--composer-reflection);
+  box-shadow: var(--composer-shadow);
+}
+/* One surface for the home prompt, chat prompt and every Manage card. */
+:root {
+  --composer-surface: rgba(5, 5, 6, 0.9);
+  --composer-reflection: none;
+  --composer-shadow: 0 12px 36px #00000024;
+}
+[data-theme='light'] {
+  --composer-surface: rgba(255, 255, 255, 0.36);
+  --composer-reflection: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.48),
     rgba(255, 255, 255, 0.12) 52%,
     rgba(255, 255, 255, 0.28)
   );
-  box-shadow:
-    inset 0 0 24px #ffffff30,
-    0 12px 36px #17203312;
+  --composer-shadow: inset 0 0 24px #ffffff30, 0 12px 36px #17203312;
 }
 .project-composer,
-.studio-composer {
-  background-color: rgba(5, 5, 6, 0.9);
-  background-image: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.04),
-    rgba(255, 255, 255, 0) 50%,
-    rgba(255, 255, 255, 0.015)
-  );
-  box-shadow:
-    inset 0 12px 28px #ffffff03,
-    0 12px 36px #00000024;
-}
-[data-theme='light'] .project-composer,
-[data-theme='light'] .studio-composer {
-  background-color: var(--glass);
+.studio-composer,
+.workspace-layout.workspace-secondary .panel {
+  background-color: var(--composer-surface);
+  background-image: var(--composer-reflection);
+  backdrop-filter: blur(24px) saturate(115%);
+  -webkit-backdrop-filter: blur(24px) saturate(115%);
+  box-shadow: var(--composer-shadow);
+  border: 0;
 }
 .earth-subdued .earth-veil {
   background: linear-gradient(180deg, #000000d9, #000000a8 55%, #000000c9);
@@ -2855,37 +2857,6 @@ summary:focus-visible {
 /* A reflective surface stays visible even over the quiet chat backdrop. */
 .dialog-content {
   border: 0;
-}
-.project-composer.chat-composer {
-  background-color: rgba(3, 3, 5, 0.77);
-  background-image:
-    linear-gradient(
-      115deg,
-      rgba(255, 255, 255, 0.095),
-      transparent 42%,
-      rgba(255, 255, 255, 0.025)
-    ),
-    radial-gradient(ellipse at 15% 0%, rgba(255, 255, 255, 0.07), transparent 65%);
-  backdrop-filter: blur(28px) saturate(140%);
-  -webkit-backdrop-filter: blur(28px) saturate(140%);
-  box-shadow:
-    inset 0 12px 25px rgba(255, 255, 255, 0.025),
-    0 10px 32px rgba(0, 0, 0, 0.22);
-  border: 0;
-}
-[data-theme='light'] .project-composer.chat-composer {
-  background-color: rgba(255, 255, 255, 0.3);
-  background-image:
-    linear-gradient(
-      115deg,
-      rgba(255, 255, 255, 0.8),
-      rgba(255, 255, 255, 0.08) 43%,
-      rgba(255, 255, 255, 0.5)
-    ),
-    radial-gradient(ellipse at 90% 100%, rgba(179, 186, 201, 0.16), transparent 65%);
-  box-shadow:
-    inset 0 14px 24px rgba(255, 255, 255, 0.5),
-    0 12px 30px rgba(34, 42, 58, 0.12);
 }
 .chat-preview {
   opacity: 0;

@@ -342,11 +342,11 @@ test('chat uses compact unlabelled user bubbles, neutral gray themes and translu
     expect((await bubble.boundingBox()).width).toBeLessThanOrEqual(460);
     await expect(page.locator('.credit-box')).toHaveCSS('border-width', '0px');
     await expect(page.locator('.chat-composer')).toHaveCSS('border-width', '0px');
-    await expect(page.locator('.chat-composer')).toHaveCSS('backdrop-filter', /blur\(28px\)/);
+    await expect(page.locator('.chat-composer')).toHaveCSS('backdrop-filter', /blur\(24px\)/);
     if (theme === 'light') {
       await expect(page.locator('.chat-composer')).toHaveCSS(
         'background-color',
-        'rgba(255, 255, 255, 0.3)',
+        'rgba(255, 255, 255, 0.36)',
       );
       await expect(page.locator('.chat-composer')).toHaveCSS('background-image', /linear-gradient/);
     }
@@ -394,8 +394,8 @@ test('attachment menus dismiss outside and stay above the bottom chat composer i
   await expect(page.locator('iframe')).toBeVisible();
   await page.getByRole('button', { name: 'Close app preview' }).click();
   const chat = page.getByLabel('Ask Gotcha to build or edit your app');
-  await expect(page.locator('.chat-composer')).toHaveCSS('background-color', 'rgba(3, 3, 5, 0.77)');
-  await expect(page.locator('.chat-composer')).toHaveCSS('background-image', /radial-gradient/);
+  await expect(page.locator('.chat-composer')).toHaveCSS('background-color', homeGlass.color);
+  await expect(page.locator('.chat-composer')).toHaveCSS('background-image', homeGlass.sheen);
   for (const theme of ['dark', 'light']) {
     for (const [width, height] of [
       [1440, 1000],
