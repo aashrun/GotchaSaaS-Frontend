@@ -4,7 +4,7 @@ Updated 14 October 2026. The local integration workspace runs React/Vite on port
 
 ## Implemented
 
-- Authenticated tenant-aware SaaS control plane, protected source editor, checkpoint/export/recovery, transactional credit ledger, optional folders, project-first chat/preview flow.
+- Authenticated tenant-aware SaaS control plane, protected source editor, checkpoint/export/recovery, transactional credit ledger, simple Projects/Search/Recents navigation, project-first chat/preview flow.
 - Black/white Arial UI, borderless single-icon appearance control, lowered home heading/composer, sidebar collapse, pinned credits/account controls, folded Manage, 22 random Earth views with two-hour rotation and cloud imagery in light mode.
 - Original Gotcha! Classic Quality wordmark and Gotcha Games favicon, borderless rounded inset canvas, smooth minimal sidebar control, account-scoped search, collapsible Recents, ten personalized greetings, compact circular upward send button with adjacent microphone, shared validated text/image references, and a clearly labeled connector roadmap.
 - OpenRouter Responses agent loop with strict server-validated file/search/write/check/browser/research/memory/repository/action tools. Native function result continuity, durable steps/candidates, role routing, bounded context/outputs/calls/compute, worker lease fencing and safe checkpoint resume.
@@ -45,6 +45,10 @@ The separate real-account tic-tac-toe build required three failed attempts and h
 
 ## Remaining scope
 
-New builds currently create a fresh preview database; the paused database persists only within its sandbox. Production data needs a separately deployed runtime/database. Cloud deployment of this platform's API/worker/database; production-generated app hosting/custom domains; arbitrary dependencies or unsupported runtimes; generic binary uploads with quarantine/antivirus; live GitHub credential verification; live Stripe and external database/hosting integration; broader generated-app security/evaluation suites; commercial plan catalog and invoice reconciliation. These are not marked as delivered by a passing local test.
+New builds currently create a fresh preview database; the paused database persists only within its sandbox. Production data needs a separately deployed runtime/database. Cloud deployment of this platform's API/worker; production-generated app hosting/custom domains; arbitrary dependencies or unsupported runtimes; generic binary uploads with quarantine/antivirus; live GitHub credential verification; live Stripe and external database/hosting integration; broader generated-app security/evaluation suites; commercial plan catalog and invoice reconciliation. These are not marked as delivered by a passing local test.
 
 See [harness/routing/economics](HARNESS_STRATEGY.md), [voice](VOICE_INPUT.md), [project structure](PROJECT_STRUCTURE.md), and [security](SECURITY.md).
+
+## Latest refinement
+
+Platform storage migrated to Neon with all existing data verified. New usage has configurable contribution pricing and job policy snapshots; administration reports measured token/cost/credit totals. Chat has stronger dark/light glass, no model label, borderless modals, and a smoothly animated preview with an accessible draggable divider, expandable browser and real preview document address. User-facing branding is Gotcha SaaS. Internal compatibility paths for the already-built E2B image and legacy preview bridges remain supported.

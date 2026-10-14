@@ -29,7 +29,7 @@ Customer databases are not tables in this database. No control-plane connection 
 
 Shared checkpoint actor references use SET NULL when a contributor deletes their account. The project owner retains the checkpoint source. Account/project deletion serializes against memberships, projects and credit creation, blocks unresolved paid resources, and clears historical deployment records only after external cleanup. A nullable-column guard handles earlier local schemas.
 
-`005-project-folders.js` adds the 23rd platform table, Folders, and nullable `Projects.folderId`. A composite foreign key prevents assigning a folder from another organization even outside the HTTP API. Folder deletion clears only the folder assignment; it preserves projects, organization ownership, source, versions and chat. There is a 50-folder workspace quota. Existing projects migrate to an unfiled state. Down/up and existing-project/source preservation were verified in `nebula_migration_test`.
+`005-project-folders.js` adds the 23rd platform table, Folders, and nullable `Projects.folderId`. A composite foreign key prevents assigning a folder from another organization even outside the HTTP API. Folder deletion clears only the folder assignment; it preserves projects, organization ownership, source, versions and chat. There is a 50-folder workspace quota. Existing projects migrate to an unfiled state. Down/up and existing-project/source preservation were verified in `gotcha_migration_test`.
 
 ## Agent and voice extensions
 

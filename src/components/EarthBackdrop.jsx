@@ -20,7 +20,7 @@ export function useEarthScene(userId, theme) {
   const [catalog, setCatalog] = useState({ dark: [], light: [] });
   const [selection, setSelection] = useState({ index: 0, changedAt: Date.now() });
   const views = catalog[theme] || [];
-  const key = `nebula-earth:${userId}:${theme}`;
+  const key = `gotcha-earth:${userId}:${theme}`;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -36,7 +36,7 @@ export function useEarthScene(userId, theme) {
 
   useEffect(() => {
     if (!views.length) return;
-    const login = sessionStorage.getItem('nebula-login-at') || 'existing-session';
+    const login = sessionStorage.getItem('gotcha-login-at') || 'existing-session';
     const previous = read(key);
     const now = Date.now();
     const storedIndex = Number.isInteger(previous?.index) ? previous.index : 0;

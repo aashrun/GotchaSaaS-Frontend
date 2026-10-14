@@ -40,6 +40,25 @@ function AdminPanel() {
           </div>
         ))}
       </div>
+      {data?.economics && (
+        <section className="panel form-stack">
+          <h3>Usage economics</h3>
+          <p>
+            {data.economics.inputTokens.toLocaleString()} input tokens ·{' '}
+            {data.economics.outputTokens.toLocaleString()} output tokens ·{' '}
+            {data.economics.chargedCredits.toLocaleString()} charged credits
+          </p>
+          <p>
+            Provider cost: ${data.economics.providerCostUsd.toFixed(4)} · Allocated credit value: $
+            {data.economics.creditValueUsd.toFixed(4)} · Service contribution: $
+            {data.economics.serviceContributionUsd.toFixed(4)}
+          </p>
+          <p className="muted">
+            New usage targets {data.economics.pricing.grossMarginPercent}% contribution.{' '}
+            {data.economics.note}
+          </p>
+        </section>
+      )}
       <form
         className="panel form-stack"
         onSubmit={async (e) => {

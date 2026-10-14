@@ -10,7 +10,7 @@ test('an idea becomes a persistent chat in the same workspace with optional sour
   await expect(page).toHaveURL('/auth/login');
   await page.getByRole('link', { name: 'Create an account', exact: true }).click();
   await page.getByLabel('Your first name').fill('Browser Test');
-  await page.getByLabel('Email address').fill(`browser-${randomUUID()}@nebula.test`);
+  await page.getByLabel('Email address').fill(`browser-${randomUUID()}@gotcha.test`);
   await page.getByLabel('Password', { exact: true }).fill('A secure browser password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');
@@ -124,7 +124,7 @@ test('Earth workspace themes, rotation and sidebar footer work at every viewport
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const email = `browser-layout-${randomUUID()}@nebula.test`;
+  const email = `browser-layout-${randomUUID()}@gotcha.test`;
   const password = 'A secure layout password!1';
   await page.clock.install({ time: new Date() });
   await page.goto('/auth/register');
@@ -236,86 +236,22 @@ test('Earth workspace themes, rotation and sidebar footer work at every viewport
   await expect(earth).not.toHaveAttribute('src', beforeLogin);
 });
 
-test('folders organize project conversations and keep projects when a folder is deleted', async ({
+test('Projects and search replace folder navigation without losing project access', async ({
   page,
 }) => {
   await page.goto('/auth/register');
-  await page.getByRole('textbox', { name: 'Your first name' }).fill('Folder Test');
-  await page
-    .getByRole('textbox', { name: 'Email address' })
-    .fill(`browser-folders-${randomUUID()}@nebula.test`);
-  await page.getByLabel('Password', { exact: true }).fill('A secure folder password!1');
+  await page.getByLabel('Your first name').fill('Project Test');
+  await page.getByLabel('Email address').fill(`browser-projects-${randomUUID()}@gotcha.test`);
+  await page.getByLabel('Password', { exact: true }).fill('A secure project password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');
-  for (const name of ['Client work', 'Experiments']) {
-    await page.getByRole('button', { name: 'Create folder', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Folder name' }).fill(name);
-    await page
-      .getByRole('dialog')
-      .getByRole('button', { name: 'Create folder', exact: true })
-      .click();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(
-      page.locator('.folder-navigation').getByRole('link', { name: new RegExp(name) }),
-    ).toBeVisible();
-  }
-  await page
-    .locator('.folder-navigation')
-    .getByRole('link', { name: /Client work/ })
-    .click();
-  const folderId = new URL(page.url()).searchParams.get('folderId');
-  await page.getByRole('button', { name: 'New project', exact: true }).click();
-  await page.getByLabel('Project options', { exact: true }).click();
-  await expect(page.getByRole('combobox', { name: 'Save new project in folder' })).toHaveValue(
-    folderId,
-  );
-  await expect(page.locator('.folder-selected')).toHaveCount(1);
-  const idea = 'Build a customer booking calendar';
-  await page.getByRole('textbox', { name: 'Describe your app idea' }).fill(idea);
-  await page.getByRole('button', { name: 'Create project from idea' }).click();
-  await expect(page).toHaveURL(/\/projects\?chat=/);
-  await expect(page.locator('.chat-message.user')).toContainText(idea);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Show project tools' })).toBeVisible();
-  await page.reload();
-  await expect(page.locator('.chat-message.user')).toContainText(idea);
+  await expect(page.getByRole('button', { name: 'Create folder', exact: true })).toHaveCount(0);
   await page.getByRole('link', { name: 'Projects', exact: true }).click();
-  await page
-    .locator('.folder-navigation')
-    .getByRole('link', { name: /Client work/ })
-    .click();
-  await expect(page.getByRole('heading', { name: idea })).toBeVisible();
-  await page.getByRole('button', { name: 'Actions for ' + idea }).click();
-  await page.getByRole('button', { name: 'Move to folder', exact: true }).click();
-  await page
-    .getByRole('combobox', { name: 'Destination folder' })
-    .selectOption({ label: 'Experiments' });
-  await page.getByRole('button', { name: 'Move project', exact: true }).click();
-  await expect(page.getByRole('heading', { name: idea })).toHaveCount(0);
-  await page
-    .locator('.folder-navigation')
-    .getByRole('link', { name: /Experiments/ })
-    .click();
-  await expect(page.getByRole('heading', { name: idea })).toBeVisible();
-  await page.getByRole('button', { name: 'Actions for folder Experiments' }).click();
-  await page.getByRole('button', { name: 'Rename folder', exact: true }).click();
-  await page.getByRole('textbox', { name: 'Folder name' }).fill('Product lab');
-  await page.getByRole('button', { name: 'Save folder name' }).click();
-  await expect(page.getByRole('heading', { name: /Product lab/ })).toBeVisible();
-  await page.reload();
-  await page.getByRole('button', { name: 'Actions for folder Product lab' }).click();
-  await page.getByRole('button', { name: 'Delete folder', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Your projects will stay saved');
-  await page.getByRole('button', { name: 'Delete folder Product lab' }).click();
   await expect(page).toHaveURL('/library');
-  await expect(page.getByRole('heading', { name: idea })).toBeVisible();
-  await expect(
-    page.locator('.folder-navigation').getByRole('link', { name: /Product lab/ }),
-  ).toHaveCount(0);
-  await page.getByRole('textbox', { name: 'Search projects' }).fill('BOOKING');
-  await expect(page.getByRole('heading', { name: idea })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Search projects' }).fill('missing project');
-  await expect(page.getByRole('heading', { name: idea })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Search projects', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCSS('border-width', '0px');
+  await page.getByRole('button', { name: 'Close dialog' }).click();
 });
 
 test('sidebar collapse, pinned credits, folded Manage and top-right appearance stay usable', async ({
@@ -325,7 +261,7 @@ test('sidebar collapse, pinned credits, folded Manage and top-right appearance s
   await page.getByRole('textbox', { name: 'Your first name' }).fill('Sidebar Test');
   await page
     .getByRole('textbox', { name: 'Email address' })
-    .fill(`browser-sidebar-${randomUUID()}@nebula.test`);
+    .fill(`browser-sidebar-${randomUUID()}@gotcha.test`);
   await page.getByLabel('Password', { exact: true }).fill('A secure sidebar password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');
@@ -394,7 +330,7 @@ test('personalized composer, attachments, project search and connector navigatio
   await page.getByRole('textbox', { name: 'Your first name' }).fill('Maya');
   await page
     .getByRole('textbox', { name: 'Email address' })
-    .fill(`browser-ref-${randomUUID()}@nebula.test`);
+    .fill(`browser-ref-${randomUUID()}@gotcha.test`);
   await page.getByLabel('Password', { exact: true }).fill('A secure reference password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');
@@ -473,7 +409,7 @@ test('Manage pages share a compact borderless glass layout in both themes and ex
   await page.getByRole('textbox', { name: 'Your first name' }).fill('Glass Test');
   await page
     .getByRole('textbox', { name: 'Email address' })
-    .fill(`browser-glass-${randomUUID()}@nebula.test`);
+    .fill(`browser-glass-${randomUUID()}@gotcha.test`);
   await page.getByLabel('Password', { exact: true }).fill('A secure glass test password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');
@@ -554,7 +490,7 @@ test.afterEach(async ({ page }) => {
   const response = await request.get('/v1/auth/me');
   if (response.status() !== 200) return;
   const data = await response.json();
-  if (!data.user.email.startsWith('browser-') || !data.user.email.endsWith('@nebula.test')) return;
+  if (!data.user.email.startsWith('browser-') || !data.user.email.endsWith('@gotcha.test')) return;
   await request.delete('/v1/auth/account', {
     headers: { origin, 'x-csrf-token': data.csrfToken },
     data: { confirmation: 'DELETE MY ACCOUNT' },

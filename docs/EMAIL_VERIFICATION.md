@@ -22,4 +22,4 @@ APP_ORIGIN=https://your-builder-domain.example
 
 ## Isolated browser testing
 
-Use a separate local API with `MAIL_MODE=local`, `RUN_WORKER=false`, paid providers disabled, and the dedicated `nebula_studio_e2e_test` database. Point it at `APP_ORIGIN=http://localhost:7013` and `NEBULA_PORT=7014`. Run the frontend with `DEV_API_TARGET=http://127.0.0.1:7014 npm run dev -w GotchaSaaS-Frontend -- --port 7013`, then run `E2E_APP_ORIGIN=http://localhost:7013 npm run test:e2e`. Synthetic browser tests must not use the operator's live email delivery. The actual user app keeps ports 7011/7012.
+Use a separate local API with `MAIL_MODE=local`, `RUN_WORKER=false`, paid providers disabled, and the dedicated `gotcha_saas_browser_test` database. Point it at `APP_ORIGIN=http://localhost:7013` and `API_PORT=7014`. Run the frontend with `DEV_API_TARGET=http://127.0.0.1:7014 npm run dev -w GotchaSaaS-Frontend -- --port 7013`, then run `E2E_APP_ORIGIN=http://localhost:7013 npm run test:e2e`. Synthetic browser tests must not use the operator's live email delivery. The actual user app keeps ports 7011/7012.

@@ -4,7 +4,7 @@
 
 Build with `npm run build`, migrate with `npm run db:migrate`, then serve `GotchaSaaS-Frontend/dist` through Express behind HTTPS. Use a Node host, not an arbitrary Cloudflare Worker for the control plane. Set `NODE_ENV=production`, `APP_ORIGIN=https://your-platform.example`, `DATABASE_URL` to the dedicated Neon platform connection URI and `DATABASE_SSL=true`. Use a valid certificate chain; never disable TLS verification.
 
-Run web and worker processes separately. Web: `RUN_WORKER=false npm start -w GotchaSaaS-Backend`. Worker: `npm run worker`. `NEBULA_PORT` controls the HTTP port. Production binds to 0.0.0.0; local development binds to loopback. Set `TRUST_PROXY_HOPS` only to match your actual trusted proxy topology. Production must use `MAIL_MODE=resend`, `RESEND_API_KEY`, and a verified `MAIL_FROM` domain. Configure restart policy, log collection, database backups, secrets, provider quotas and alerts before going live.
+Run web and worker processes separately. Web: `RUN_WORKER=false npm start -w GotchaSaaS-Backend`. Worker: `npm run worker`. `API_PORT` controls the HTTP port. Production binds to 0.0.0.0; local development binds to loopback. Set `TRUST_PROXY_HOPS` only to match your actual trusted proxy topology. Production must use `MAIL_MODE=resend`, `RESEND_API_KEY`, and a verified `MAIL_FROM` domain. Configure restart policy, log collection, database backups, secrets, provider quotas and alerts before going live.
 
 ## E2B
 

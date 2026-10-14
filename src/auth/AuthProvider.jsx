@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
   }, []);
   const signIn = async (mode, values) => {
     const { data } = await api.post('/auth/' + mode, values);
-    sessionStorage.setItem('nebula-login-at', String(Date.now()));
+    sessionStorage.setItem('gotcha-login-at', String(Date.now()));
     accept(data);
     return data;
   };

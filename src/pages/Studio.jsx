@@ -65,7 +65,7 @@ export default function Studio() {
     { data: models } = useData('/ai/models'),
     { data: config } = useData('/config');
   const [prompt, setPrompt] = useState(
-      () => sessionStorage.getItem('nebula-studio-prompt:' + id) || '',
+      () => sessionStorage.getItem('gotcha-studio-prompt:' + id) || '',
     ),
     [modelId, setModelId] = useState('auto'),
     [tab, setTab] = useState('code'),
@@ -129,7 +129,7 @@ export default function Studio() {
     if (!searchParams.get('build') || startupHandled.current || !p || !models || !config) return;
     if (models.models.length && !modelId) return;
     startupHandled.current = true;
-    const intent = sessionStorage.getItem('nebula-studio-prompt:' + id) || p.description;
+    const intent = sessionStorage.getItem('gotcha-studio-prompt:' + id) || p.description;
     setPrompt(intent);
     const next = new URLSearchParams(searchParams);
     next.delete('build');
@@ -171,7 +171,7 @@ export default function Studio() {
     source.addEventListener('done', () => {
       source.close();
       reload();
-      sessionStorage.removeItem('nebula-studio-prompt:' + id);
+      sessionStorage.removeItem('gotcha-studio-prompt:' + id);
     });
     source.onerror = () => {
       source.close();
@@ -194,7 +194,7 @@ export default function Studio() {
       if (
         !iframe ||
         event.source !== iframe.contentWindow ||
-        request?.type !== 'nebula:runtime:request' ||
+        !['gotcha:runtime:request', 'nebula:runtime:request'].includes(request?.type) ||
         request.channel !== runtimeChannel ||
         typeof request.id !== 'string' ||
         request.id.length > 50 ||
@@ -217,7 +217,12 @@ export default function Studio() {
         pending--;
       }
       iframe.contentWindow?.postMessage(
-        { type: 'nebula:runtime:result', channel: runtimeChannel, id: request.id, ...result },
+        {
+          type: request.type.replace(':request', ':result'),
+          channel: runtimeChannel,
+          id: request.id,
+          ...result,
+        },
         '*',
       );
     };
@@ -294,7 +299,7 @@ export default function Studio() {
         maxCredits: estimate.max,
       });
       setEstimate(null);
-      sessionStorage.removeItem('nebula-studio-prompt:' + id);
+      sessionStorage.removeItem('gotcha-studio-prompt:' + id);
       setPrompt('');
       setReferences([]);
       await reload();
@@ -765,7 +770,9 @@ export default function Studio() {
               <span>
                 {runtimeLease
                   ? 'Preview active until ' + new Date(runtimeLease.expiresAt).toLocaleTimeString()
-                  : 'Cloud app preview · 14 credits for five minutes'}
+                  : 'Cloud app preview · ' +
+                    (config?.previewLeaseCredits || 14) +
+                    ' credits for five minutes'}
               </span>
               <button
                 className="secondary-button"
@@ -775,7 +782,7 @@ export default function Studio() {
                   try {
                     const { data } = await api.post('/projects/' + id + '/runtime/start', {
                       confirmation: 'START PREVIEW',
-                      maxCredits: 14,
+                      maxCredits: config?.previewLeaseCredits || 14,
                     });
                     setRuntimeLease(data.lease);
                     setPreviewKey((value) => value + 1);
@@ -799,7 +806,7 @@ export default function Studio() {
                   p.template === 'fullstack'
                     ? preview.replace(
                         '<head>',
-                        '<head><script>window.__NEBULA_RUNTIME_CHANNEL__=' +
+                        '<head><script>window.__GOTCHA_RUNTIME_CHANNEL__=window.__NEBULA_RUNTIME_CHANNEL__=' +
                           JSON.stringify(runtimeChannel) +
                           ';</script>',
                       )

@@ -38,7 +38,7 @@ function OAuthCallback() {
           { headers: { Authorization: 'Bearer ' + token } },
         );
         accept(data);
-        sessionStorage.setItem('nebula-login-at', String(Date.now()));
+        sessionStorage.setItem('gotcha-login-at', String(Date.now()));
         navigate('/projects', { replace: true });
       })().catch((e) => setError(e.message));
     }
@@ -96,7 +96,7 @@ export default function AuthPage() {
           );
         navigate(
           location.state?.from ||
-            (sessionStorage.getItem('nebula-prompt') || sessionStorage.getItem('nebula-template')
+            (sessionStorage.getItem('gotcha-prompt') || sessionStorage.getItem('gotcha-template')
               ? '/projects?new=true'
               : '/projects'),
           { replace: true },

@@ -16,7 +16,7 @@ Publishing checkouts live under ignored `.local/repositories/`. `python3 GotchaS
 - `GotchaSaaS-Frontend/src/components/ProjectChat.jsx`: ongoing chat, real job activity, agent questions and verified app preview in the same workspace.
 - `GotchaSaaS-Frontend/src/components/ProjectTools.jsx`: optional code, checkpoints, checks and GitHub/memory tools.
 
-Workspace folders are optional groups of projects, similar to [Lovable's project folders](https://docs.lovable.dev/introduction/project-folders). For example, a founder can group three apps under one client without changing any app's code or build. Deleting the folder preserves its projects. They are useful when someone has several clients or apps, so they remain available in the collapsible sidebar; a user can ignore them entirely. These sidebar groups are separate from the two repository directories on disk and do not create directories inside a generated app.
+The dedicated folder section and folder controls have been removed from the interface. A founder can use Projects, Recents and Search directly. Folders were optional project groups; they never affected the agent, app code or hosting. Existing folder records and backend permissions remain for data compatibility, and all projects appear in the unfiltered library.
 
 A generated frontend app has `src/` for components/styles and protected package, entry and build configuration. A full-stack app additionally has editable `server/index.js`, protected `src/lib/runtime.ts`, and protected `tests/runtime.test.js`. The preview server and PostgreSQL live only inside E2B. The ZIP includes source, not the preview database or platform credentials. Exported apps require their own application database URL and deployment environment.
 
@@ -30,7 +30,7 @@ Actual file/research/check/browser actions produce durable activity updates. A c
 
 Questions live in the conversation and open a small modal. Blocking questions pause a saved sandbox/checkpoint and stop further tools. Non-blocking questions declare source paths whose writes are deferred; independent edits and research can continue. Completion waits for all answers. Answers are authenticated, limited to the job requester, secret checked, idempotent and serialized with the pause transaction. Only known provider/tool outcomes can resume.
 
-A founder can stay entirely in chat. Folders only organize projects; generated source directories are maintained by the agent. GitHub is optional. Use Project tools → Memory & GitHub to connect a repository and review a prepared draft pull request; publishing still requires the owner's explicit approval. Our platform source is in the two GotchaSaaS repositories. That does not automatically create a repository for every customer app.
+A founder can stay entirely in chat. Generated source directories are maintained by the agent. GitHub is optional. Use Project tools → Memory & GitHub to connect a repository and review a prepared draft pull request; publishing still requires the owner's explicit approval. Our platform source is in the two GotchaSaaS repositories. That does not automatically create a repository for every customer app.
 
 References: [Codex browser beside chat](https://learn.chatgpt.com/docs/browser?surface=app), [Lovable optional GitHub sync](https://docs.lovable.dev/integrations/github), [E2B cloud sandboxes](https://docs.e2b.dev/). These references do not establish that Codex or Lovable uses E2B internally.
 

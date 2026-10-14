@@ -122,7 +122,7 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
         return;
       }
       const source = context.createMediaStreamSource(stream),
-        node = new AudioWorkletNode(context, 'nebula-recorder'),
+        node = new AudioWorkletNode(context, 'gotcha-recorder'),
         analyser = context.createAnalyser();
       analyser.fftSize = 256;
       const mute = context.createGain();

@@ -12,6 +12,8 @@ import {
   RefreshCw,
   Square,
   X,
+  PanelLeftClose,
+  MessageSquare,
 } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../auth/AuthProvider';
@@ -36,12 +38,12 @@ export default function ProjectChat({ id }) {
   const [draft, setDraft] = useState(''),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(() =>
-      sessionStorage.getItem('nebula-studio-prompt:' + id) && !user.emailVerified
+      sessionStorage.getItem('gotcha-studio-prompt:' + id) && !user.emailVerified
         ? 'Verify your email to start this build. Your idea is saved here.'
         : '',
     );
   const [pendingPrompt, setPendingPrompt] = useState(
-    () => sessionStorage.getItem('nebula-studio-prompt:' + id) || '',
+    () => sessionStorage.getItem('gotcha-studio-prompt:' + id) || '',
   );
   const [references, setReferences] = useState(() => storedReferences(id));
   const [referenceBusy, setReferenceBusy] = useState(false),
@@ -58,6 +60,23 @@ export default function ProjectChat({ id }) {
     [toolTab, setToolTab] = useState('source'),
     [lease, setLease] = useState(null);
   const [verificationBusy, setVerificationBusy] = useState(false);
+  const [chatWidth, setChatWidth] = useState(() => {
+    const saved = Number(localStorage.getItem('gotcha-preview-chat-width'));
+    return saved >= 0.18 && saved <= 0.7 ? saved : 0.46;
+  });
+  const [chatHidden, setChatHidden] = useState(false),
+    [dragging, setDragging] = useState(false);
+  const split = useRef(null),
+    pointer = useRef(null);
+  function resizeChat(value) {
+    const hidden = value < 0.14;
+    setChatHidden(hidden);
+    if (!hidden) {
+      const next = Math.max(0.18, Math.min(0.7, value));
+      setChatWidth(next);
+      localStorage.setItem('gotcha-preview-chat-width', String(next));
+    }
+  }
   const started = useRef(false),
     submitting = useRef(false),
     seenQuestions = useRef(new Set()),
@@ -108,7 +127,7 @@ export default function ProjectChat({ id }) {
         (j) => j.id === submitted.jobId && (j.state === 'completed' || !terminal.includes(j.state)),
       )
     ) {
-      sessionStorage.removeItem('nebula-studio-prompt:' + id);
+      sessionStorage.removeItem('gotcha-studio-prompt:' + id);
       setPendingPrompt('');
     }
     for (const job of data.jobs.slice(0, 3)) {
@@ -190,7 +209,7 @@ export default function ProjectChat({ id }) {
       if (
         !frame ||
         event.source !== frame.contentWindow ||
-        request?.type !== 'nebula:runtime:request' ||
+        !['gotcha:runtime:request', 'nebula:runtime:request'].includes(request?.type) ||
         request.channel !== channel ||
         typeof request.id !== 'string' ||
         request.id.length > 50 ||
@@ -214,7 +233,7 @@ export default function ProjectChat({ id }) {
       }
       if (alive && iframe.current === frame)
         frame.contentWindow?.postMessage(
-          { type: 'nebula:runtime:result', channel, id: request.id, ...result },
+          { type: request.type.replace(':request', ':result'), channel, id: request.id, ...result },
           '*',
         );
     };
@@ -233,7 +252,7 @@ export default function ProjectChat({ id }) {
     setBusy(true);
     setNotice('');
     setPendingPrompt(prompt);
-    sessionStorage.setItem('nebula-studio-prompt:' + id, prompt);
+    sessionStorage.setItem('gotcha-studio-prompt:' + id, prompt);
     try {
       if (!data.messages.some((m) => m.role === 'user' && !m.jobId && m.content === prompt)) {
         if (!attempt.current || attempt.current.prompt !== prompt)
@@ -267,7 +286,7 @@ export default function ProjectChat({ id }) {
       setDraft('');
       setPendingPrompt('');
       setReferences([]);
-      sessionStorage.removeItem('nebula-studio-prompt:' + id);
+      sessionStorage.removeItem('gotcha-studio-prompt:' + id);
       attempt.current = null;
       await reload();
       await refreshNavigation();
@@ -284,7 +303,7 @@ export default function ProjectChat({ id }) {
     const next = new URLSearchParams(params);
     next.delete('build');
     setParams(next, { replace: true });
-    send(undefined, sessionStorage.getItem('nebula-studio-prompt:' + id) || project.description);
+    send(undefined, sessionStorage.getItem('gotcha-studio-prompt:' + id) || project.description);
   }, [project?.id]);
   async function answerQuestion(event) {
     event.preventDefault();
@@ -314,7 +333,16 @@ export default function ProjectChat({ id }) {
       </p>
     );
   return (
-    <main className={'project-chat' + (preview && previewOpen ? ' with-preview' : '')}>
+    <main
+      ref={split}
+      className={
+        'project-chat' +
+        (preview && previewOpen ? ' with-preview' : '') +
+        (previewOpen && chatHidden ? ' chat-hidden' : '') +
+        (dragging ? ' resizing-preview' : '')
+      }
+      style={{ '--chat-width': (chatHidden ? 0 : chatWidth * 100) + '%' }}
+    >
       <header className="project-chat-header">
         <span title={project.name}>{project.name}</span>
         <div>
@@ -341,7 +369,11 @@ export default function ProjectChat({ id }) {
           </button>
         </div>
       </header>
-      <section className="project-chat-column" aria-label="Project chat">
+      <section
+        className="project-chat-column"
+        aria-label="Project chat"
+        inert={previewOpen && chatHidden}
+      >
         <div className="project-conversation">
           {!data.messages.length && (
             <p className="muted">Tell me what you want to ship. We’ll build it here.</p>
@@ -489,9 +521,6 @@ export default function ProjectChat({ id }) {
                 onBusy={setReferenceBusy}
                 disabled={busy || !!active || !canEdit}
               />
-              <span className="chat-routing-label">
-                {configuration?.codingPolicy?.developmentOnly ? 'GPT-6 Luna' : 'Auto · specialists'}
-              </span>
               <div className="composer-send-tools">
                 <VoiceInput
                   disabled={busy || !canEdit}
@@ -538,13 +567,75 @@ export default function ProjectChat({ id }) {
           </small>
         </div>
       </section>
-      {preview && previewOpen && (
-        <aside className="chat-preview" aria-label="App preview">
+      {preview && (
+        <div
+          className="preview-resizer"
+          role="separator"
+          aria-label="Resize app preview"
+          aria-orientation="vertical"
+          aria-valuemin={0}
+          aria-valuemax={70}
+          aria-valuenow={chatHidden ? 0 : Math.round(chatWidth * 100)}
+          tabIndex={previewOpen && !chatHidden ? 0 : -1}
+          aria-hidden={!previewOpen || chatHidden}
+          onPointerDown={(e) => {
+            if (e.button !== 0) return;
+            pointer.current = e.pointerId;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            setDragging(true);
+            e.preventDefault();
+          }}
+          onPointerMove={(e) => {
+            if (pointer.current !== e.pointerId) return;
+            const box = split.current.getBoundingClientRect();
+            resizeChat((e.clientX - box.left) / box.width);
+          }}
+          onPointerUp={(e) => {
+            pointer.current = null;
+            setDragging(false);
+            e.currentTarget.releasePointerCapture(e.pointerId);
+          }}
+          onPointerCancel={() => {
+            pointer.current = null;
+            setDragging(false);
+          }}
+          onKeyDown={(e) => {
+            if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
+              e.preventDefault();
+              resizeChat(
+                e.key === 'Home'
+                  ? 0
+                  : e.key === 'End'
+                    ? 0.7
+                    : chatWidth + (e.key === 'ArrowLeft' ? -0.05 : 0.05),
+              );
+            }
+          }}
+        />
+      )}
+      {preview && (
+        <aside
+          className="chat-preview"
+          aria-label="App preview"
+          aria-hidden={!previewOpen}
+          inert={!previewOpen}
+        >
           <div className="chat-preview-toolbar">
-            <span>
-              <Monitor size={14} /> Preview
-            </span>
+            <input
+              className="preview-address"
+              aria-label="App preview address"
+              readOnly
+              value={new URL('/v1/projects/' + id + '/preview/document', location.origin).href}
+            />
             <div>
+              <button
+                className="icon-button"
+                aria-label={chatHidden ? 'Show project chat' : 'Hide project chat'}
+                title={chatHidden ? 'Show chat' : 'Expand preview'}
+                onClick={() => setChatHidden(!chatHidden)}
+              >
+                {chatHidden ? <MessageSquare size={16} /> : <PanelLeftClose size={16} />}
+              </button>
               <button
                 className="icon-button"
                 aria-label="Publish app"
@@ -589,7 +680,7 @@ export default function ProjectChat({ id }) {
                       (
                         await api.post('/projects/' + id + '/runtime/start', {
                           confirmation: 'START PREVIEW',
-                          maxCredits: 14,
+                          maxCredits: configuration?.previewLeaseCredits || 14,
                         })
                       ).data.lease,
                     );
@@ -601,7 +692,7 @@ export default function ProjectChat({ id }) {
                   }
                 }}
               >
-                Start backend · 14 credits / 5 min
+                Start backend · {configuration?.previewLeaseCredits || 14} credits / 5 min
               </button>
             </div>
           )}
@@ -615,7 +706,7 @@ export default function ProjectChat({ id }) {
               project.template === 'fullstack'
                 ? preview.replace(
                     '<head>',
-                    '<head><script>window.__NEBULA_RUNTIME_CHANNEL__=' +
+                    '<head><script>window.__GOTCHA_RUNTIME_CHANNEL__=window.__NEBULA_RUNTIME_CHANNEL__=' +
                       JSON.stringify(channel) +
                       ';</script>',
                   )

@@ -1,6 +1,6 @@
 const packageJson = JSON.stringify(
   {
-    name: 'nebula-app',
+    name: 'gotcha-app',
     version: '1.0.0',
     private: true,
     type: 'module',

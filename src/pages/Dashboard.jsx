@@ -31,17 +31,14 @@ export default function Dashboard({ library = false }) {
 }
 function ProjectHome({ library }) {
   const { user } = useAuth();
-  const { folders, refreshNavigation } = useOutletContext();
+  const { refreshNavigation } = useOutletContext();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
-  const folderId = params.get('folderId') || '';
-  const selectedFolder = folders.find((folder) => folder.id === folderId);
   const [prompt, setPrompt] = useState('');
   const [greeting, setGreeting] = useState(() => nextGreeting(user));
   const [references, setReferences] = useState([]);
   const [referenceBusy, setReferenceBusy] = useState(false);
   const [starter, setStarter] = useState('auto');
-  const [destination, setDestination] = useState(folderId === 'none' ? '' : folderId);
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -51,8 +48,6 @@ function ProjectHome({ library }) {
   const [menu, setMenu] = useState(null);
   const [rename, setRename] = useState(null);
   const [newName, setNewName] = useState('');
-  const [moving, setMoving] = useState(null);
-  const [moveTo, setMoveTo] = useState('');
   const [deleting, setDeleting] = useState(null);
   const [blank, setBlank] = useState(false);
   const composer = useRef(null),
@@ -62,7 +57,6 @@ function ProjectHome({ library }) {
       new URLSearchParams({
         page: String(page),
         archived: String(archived),
-        ...(folderId ? { folderId } : {}),
         ...(query ? { search: query } : {}),
       }),
   );
@@ -74,10 +68,6 @@ function ProjectHome({ library }) {
     return () => clearTimeout(timer);
   }, [search]);
   useEffect(() => {
-    setDestination(folderId === 'none' ? '' : folderId);
-    setPage(1);
-  }, [folderId]);
-  useEffect(() => {
     if (params.get('new') === 'true') {
       setPrompt('');
       setReferences([]);
@@ -87,16 +77,16 @@ function ProjectHome({ library }) {
       next.delete('new');
       setParams(next, { replace: true });
     }
-    const saved = sessionStorage.getItem('nebula-prompt');
+    const saved = sessionStorage.getItem('gotcha-prompt');
     if (saved) {
       setPrompt(saved);
-      sessionStorage.removeItem('nebula-prompt');
+      sessionStorage.removeItem('gotcha-prompt');
     }
-    const template = sessionStorage.getItem('nebula-template');
+    const template = sessionStorage.getItem('gotcha-template');
     if (template) {
       setStarter(template);
       composer.current?.focus();
-      sessionStorage.removeItem('nebula-template');
+      sessionStorage.removeItem('gotcha-template');
     }
   }, [params]);
   async function create(event, empty = false) {
@@ -124,9 +114,8 @@ function ProjectHome({ library }) {
         name: empty ? newName.trim() : intent.split('\n')[0].slice(0, 80),
         description: intent,
         template,
-        folderId: destination || null,
       });
-      if (intent) sessionStorage.setItem('nebula-studio-prompt:' + data.project.id, intent);
+      if (intent) sessionStorage.setItem('gotcha-studio-prompt:' + data.project.id, intent);
       if (references.length && !empty)
         sessionStorage.setItem('gotcha-references:' + data.project.id, JSON.stringify(references));
       await refreshNavigation();
@@ -142,7 +131,6 @@ function ProjectHome({ library }) {
     try {
       await api.patch('/projects/' + project.id, values);
       setRename(null);
-      setMoving(null);
       setMenu(null);
       await Promise.all([reload(), refreshNavigation()]);
       toast.success(message);
@@ -154,7 +142,6 @@ function ProjectHome({ library }) {
     <main className={'project-library page-content' + (library ? ' project-library-only' : '')}>
       {!library && (
         <section className="project-start">
-          {selectedFolder && <span className="eyebrow">{selectedFolder.name}</span>}
           <h1>{greeting}</h1>
           <form className="project-composer" onSubmit={create}>
             <textarea
@@ -180,23 +167,6 @@ function ProjectHome({ library }) {
                   <span>Options</span>
                 </summary>
                 <div className="composer-options-panel">
-                  {!!folders.length && (
-                    <label>
-                      <Folder size={14} />
-                      <select
-                        aria-label="Save new project in folder"
-                        value={destination}
-                        onChange={(event) => setDestination(event.target.value)}
-                      >
-                        <option value="">All projects</option>
-                        {folders.map((folder) => (
-                          <option key={folder.id} value={folder.id} disabled={!folder.writable}>
-                            {folder.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  )}
                   <label>
                     Starter
                     <select
@@ -239,13 +209,7 @@ function ProjectHome({ library }) {
                 className="primary-button project-send"
                 aria-label="Create project from idea"
                 title="Build this idea"
-                disabled={
-                  busy ||
-                  voiceBusy ||
-                  referenceBusy ||
-                  prompt.trim().length < 5 ||
-                  (destination && !folders.find((folder) => folder.id === destination)?.writable)
-                }
+                disabled={busy || voiceBusy || referenceBusy || prompt.trim().length < 5}
               >
                 {busy ? <Loader2 size={18} className="voice-spinner" /> : <ArrowUp size={19} />}
               </button>
@@ -257,11 +221,7 @@ function ProjectHome({ library }) {
         <section className="project-list-section">
           <div className="project-list-heading">
             <h2>
-              {selectedFolder
-                ? selectedFolder.name
-                : folderId === 'none'
-                  ? 'Unfiled projects'
-                  : 'Your projects'}
+              Your projects
               <span>{data?.total ?? 0}</span>
             </h2>
             <div>
@@ -296,9 +256,7 @@ function ProjectHome({ library }) {
               <p>
                 {query
                   ? 'No projects match your search.'
-                  : selectedFolder
-                    ? 'This folder is ready for your first project.'
-                    : 'Your projects will appear here as you build.'}
+                  : 'Your projects will appear here as you build.'}
               </p>
             </div>
           ) : (
@@ -316,9 +274,8 @@ function ProjectHome({ library }) {
                     <h3>{project.name}</h3>
                     <p>{project.description || 'Blank project'}</p>
                     <small>
-                      {folders.find((folder) => folder.id === project.folderId)?.name ||
-                        'All projects'}{' '}
-                      · {new Date(project.updatedAt).toLocaleDateString()}
+                      {project.template || 'App'} ·{' '}
+                      {new Date(project.updatedAt).toLocaleDateString()}
                     </small>
                   </Link>
                   <div className="project-menu-wrapper">
@@ -341,17 +298,6 @@ function ProjectHome({ library }) {
                           }}
                         >
                           Rename
-                        </button>
-                        <button
-                          disabled={!project.canEdit}
-                          onClick={() => {
-                            setMenu(null);
-                            setMoving(project);
-                            setMoveTo(project.folderId || '');
-                          }}
-                        >
-                          <Folder size={14} />
-                          Move to folder
                         </button>
                         <button
                           disabled={!project.canEdit}
@@ -450,40 +396,6 @@ function ProjectHome({ library }) {
             />
           </label>
           <button className="primary-button">Save name</button>
-        </form>
-      </Modal>
-      <Modal
-        open={!!moving}
-        onOpenChange={(value) => !value && setMoving(null)}
-        title="Move project"
-      >
-        <form
-          className="form-stack"
-          onSubmit={(event) => {
-            event.preventDefault();
-            update(moving, { folderId: moveTo || null }, 'Project moved');
-          }}
-        >
-          <label>
-            Folder
-            <select
-              aria-label="Destination folder"
-              value={moveTo}
-              onChange={(event) => setMoveTo(event.target.value)}
-            >
-              <option value="">All projects</option>
-              {folders
-                .filter(
-                  (folder) => folder.organizationId === moving?.organizationId && folder.writable,
-                )
-                .map((folder) => (
-                  <option value={folder.id} key={folder.id}>
-                    {folder.name}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <button className="primary-button">Move project</button>
         </form>
       </Modal>
       <Modal

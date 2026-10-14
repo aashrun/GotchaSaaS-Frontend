@@ -43,7 +43,10 @@ export default function Billing() {
               <p>
                 {data.account.reserved} reserved · {data.account.balance} total balance
               </p>
-              <small>Credits are ledger units. Model costs use operator-configured prices.</small>
+              <small>
+                Builds use measured provider costs plus a service margin. Unused reservations return
+                automatically.
+              </small>
             </article>
             <article className="panel">
               <span className="eyebrow">YOUR PLAN</span>
@@ -134,7 +137,7 @@ export default function Billing() {
                 <table>
                   <thead>
                     <tr>
-                      <th>Model</th>
+                      <th>Date</th>
                       <th>Input tokens</th>
                       <th>Output tokens</th>
                       <th>Estimated provider cost</th>
@@ -143,12 +146,13 @@ export default function Billing() {
                   <tbody>
                     {data.usage.map((u) => (
                       <tr key={u.id}>
-                        <td>
-                          {u.provider} / {u.model}
-                        </td>
+                        <td>{new Date(u.createdAt).toLocaleDateString()}</td>
                         <td>{u.inputTokens}</td>
                         <td>{u.outputTokens}</td>
-                        <td>${u.estimatedUsd.toFixed(5)}</td>
+                        <td>
+                          ${u.estimatedUsd.toFixed(5)}{' '}
+                          {u.costSource === 'provider_reported' ? '(reported)' : '(estimated)'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -156,7 +160,8 @@ export default function Billing() {
               </div>
             )}
             <small>
-              Cost estimates use recorded token counts and configured rates, not provider invoices.
+              Costs use provider-reported usage where available; otherwise recorded tokens and
+              configured rates. Sandbox compute is estimated. Invoice reconciliation is pending.
             </small>
           </section>
           <div className="notice">

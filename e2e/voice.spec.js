@@ -38,7 +38,7 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/auth/register');
   await page.getByLabel('Your first name').fill('Voice Test');
-  await page.getByLabel('Email address').fill('browser-voice-' + randomUUID() + '@nebula.test');
+  await page.getByLabel('Email address').fill('browser-voice-' + randomUUID() + '@gotcha.test');
   await page.getByLabel('Password', { exact: true }).fill('A secure voice password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');

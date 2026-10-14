@@ -53,7 +53,7 @@ export default function Templates() {
                 className="template-card"
                 key={t.id}
                 onClick={() => {
-                  sessionStorage.setItem('nebula-template', t.id);
+                  sessionStorage.setItem('gotcha-template', t.id);
                   navigate('/projects?new=true');
                 }}
               >

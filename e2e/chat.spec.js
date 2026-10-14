@@ -4,7 +4,7 @@ const origin = process.env.E2E_APP_ORIGIN || 'http://localhost:7011';
 async function register(page) {
   await page.goto('/auth/register');
   await page.getByLabel('Your first name').fill('Chat Test');
-  await page.getByLabel('Email address').fill('browser-chat-' + randomUUID() + '@nebula.test');
+  await page.getByLabel('Email address').fill('browser-chat-' + randomUUID() + '@gotcha.test');
   await page.getByLabel('Password', { exact: true }).fill('A secure chat password!1');
   await page.getByRole('button', { name: 'Create my workspace' }).click();
   await expect(page).toHaveURL('/projects');
@@ -172,9 +172,31 @@ test('sending an idea queues one bounded build and opens the verified mini-brows
     'Build and browser checks passed.',
   );
   expect(fixture.stats()).toEqual({ estimates: 1, submissions: 1, answered: false });
+  await expect(page.locator('.chat-routing-label')).toHaveCount(0);
+  await expect(page.getByLabel('App preview address')).toHaveValue(
+    /\/v1\/projects\/[^/]+\/preview\/document$/,
+  );
+  const before = await page.locator('.chat-preview').boundingBox();
+  const divider = page.getByRole('separator', { name: 'Resize app preview' });
+  const handle = await divider.boundingBox();
+  await page.mouse.move(handle.x + handle.width / 2, handle.y + handle.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handle.x - 100, handle.y + handle.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await expect
+    .poll(async () => (await page.locator('.chat-preview').boundingBox()).width)
+    .toBeGreaterThan(before.width + 80);
+  const value = Number(await divider.getAttribute('aria-valuenow'));
+  await divider.focus();
+  await divider.press('ArrowLeft');
+  await expect(divider).toHaveAttribute('aria-valuenow', String(value - 5));
+  await page.getByRole('button', { name: 'Hide project chat' }).click();
+  await expect(page.getByRole('region', { name: 'Project chat' })).not.toBeVisible();
+  await page.getByRole('button', { name: 'Show project chat' }).click();
+  await expect(page.getByLabel('Ask Gotcha to build or edit your app')).toBeVisible();
   await page.screenshot({ path: '.local/chat-preview.png', animations: 'disabled' });
   await page.getByRole('button', { name: 'Close app preview' }).click();
-  await expect(page.locator('iframe')).toHaveCount(0);
+  await expect(page.locator('iframe')).not.toBeVisible();
   await page.getByRole('button', { name: 'Toggle app preview' }).click();
   await expect(page.locator('iframe')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 700 });
@@ -231,7 +253,7 @@ for (const blocking of [true, false])
       await expect(page.locator('.chat-question-chip')).toBeVisible();
       if (!blocking) await expect(page.locator('.agent-working')).toBeVisible();
       else await expect(page.locator('.agent-working')).toHaveCount(0);
-      await expect(page.locator('iframe')).toHaveCount(0);
+      await expect(page.locator('iframe')).not.toBeVisible();
       await page.locator('.chat-question-chip').click();
       await modal.getByRole('button', { name: 'Subscriptions', exact: true }).click();
       await expect(page.getByLabel('Your answer')).toHaveValue('Subscriptions');
@@ -320,11 +342,11 @@ test('chat uses compact unlabelled user bubbles, neutral gray themes and translu
     expect((await bubble.boundingBox()).width).toBeLessThanOrEqual(460);
     await expect(page.locator('.credit-box')).toHaveCSS('border-width', '0px');
     await expect(page.locator('.chat-composer')).toHaveCSS('border-width', '0px');
-    await expect(page.locator('.chat-composer')).toHaveCSS('backdrop-filter', /blur\(24px\)/);
+    await expect(page.locator('.chat-composer')).toHaveCSS('backdrop-filter', /blur\(28px\)/);
     if (theme === 'light') {
       await expect(page.locator('.chat-composer')).toHaveCSS(
         'background-color',
-        'rgba(255, 255, 255, 0.36)',
+        'rgba(255, 255, 255, 0.3)',
       );
       await expect(page.locator('.chat-composer')).toHaveCSS('background-image', /linear-gradient/);
     }
@@ -372,8 +394,8 @@ test('attachment menus dismiss outside and stay above the bottom chat composer i
   await expect(page.locator('iframe')).toBeVisible();
   await page.getByRole('button', { name: 'Close app preview' }).click();
   const chat = page.getByLabel('Ask Gotcha to build or edit your app');
-  await expect(page.locator('.chat-composer')).toHaveCSS('background-color', homeGlass.color);
-  await expect(page.locator('.chat-composer')).toHaveCSS('background-image', homeGlass.sheen);
+  await expect(page.locator('.chat-composer')).toHaveCSS('background-color', 'rgba(3, 3, 5, 0.77)');
+  await expect(page.locator('.chat-composer')).toHaveCSS('background-image', /radial-gradient/);
   for (const theme of ['dark', 'light']) {
     for (const [width, height] of [
       [1440, 1000],
@@ -468,7 +490,7 @@ test.afterEach(async ({ page }) => {
   const response = await page.request.get('/v1/auth/me');
   if (response.status() !== 200) return;
   const me = await response.json();
-  if (!me.user.email.startsWith('browser-chat-') || !me.user.email.endsWith('@nebula.test')) return;
+  if (!me.user.email.startsWith('browser-chat-') || !me.user.email.endsWith('@gotcha.test')) return;
   await page.request.delete('/v1/auth/account', {
     headers: { origin, 'x-csrf-token': me.csrfToken },
     data: { confirmation: 'DELETE MY ACCOUNT' },

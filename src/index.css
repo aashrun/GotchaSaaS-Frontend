@@ -479,7 +479,7 @@ pre {
   z-index: 0;
   pointer-events: none;
 }
-.nebula-cloud {
+.gotcha-cloud {
   position: absolute;
   inset: 0;
   background:
@@ -1500,7 +1500,7 @@ pre {
   background: linear-gradient(125deg, #1b1b1bcc, #1d1d1daa);
   box-shadow: 0 8px 45px #07070722;
 }
-.dashboard-nebula {
+.dashboard-space {
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -1508,7 +1508,7 @@ pre {
     radial-gradient(ellipse at 62% 5%, #83838324, transparent 55%),
     radial-gradient(ellipse at 95% 70%, #65656522, transparent 55%);
 }
-.dashboard-nebula:after {
+.dashboard-space:after {
   content: '';
   position: absolute;
   inset: 0;
@@ -4041,7 +4041,7 @@ td:last-child {
 .star-map {
   animation: star-twinkle 12s ease-in-out infinite alternate;
 }
-.dashboard-nebula:after {
+.dashboard-space:after {
   animation: star-twinkle 15s ease-in-out infinite alternate;
 }
 @keyframes star-twinkle {
@@ -4054,7 +4054,7 @@ td:last-child {
 }
 @media (prefers-reduced-motion: reduce) {
   .star-map,
-  .dashboard-nebula:after {
+  .dashboard-space:after {
     animation: none;
   }
 }

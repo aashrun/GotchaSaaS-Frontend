@@ -17,8 +17,6 @@ import {
   Moon,
   Sun,
   ChevronDown,
-  FolderPlus,
-  MoreHorizontal,
   MessageSquare,
   ChevronsLeft,
   Search,
@@ -41,16 +39,14 @@ export default function WorkspaceLayout() {
   const { user, logout, refresh } = useAuth();
   const { theme, setTheme } = useTheme();
   const { data, error: billingError, reload: reloadBilling } = useData('/billing');
-  const { data: folderData, reload: reloadFolders } = useData('/folders');
   const { data: projectData, reload: reloadProjects } = useData('/projects');
   const navigate = useNavigate(),
     location = useLocation();
   const scene = useEarthScene(user.id, theme);
-  const preferenceKey = 'nebula-sidebar:' + user.id;
+  const preferenceKey = 'gotcha-sidebar:' + user.id;
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(preferenceKey) === 'true');
   const [manageOpen, setManageOpen] = useState(false),
-    [foldersOpen, setFoldersOpen] = useState(true),
     [recentsOpen, setRecentsOpen] = useState(true);
   const [searchOpen, setSearchOpen] = useState(false),
     [searchQuery, setSearchQuery] = useState(''),
@@ -66,13 +62,7 @@ export default function WorkspaceLayout() {
   const chat =
     location.pathname === '/projects' && new URLSearchParams(location.search).has('chat');
   const overview = ['/dashboard', '/projects'].includes(location.pathname) && !chat;
-  const [folderDialog, setFolderDialog] = useState(null),
-    [folderName, setFolderName] = useState(''),
-    [folderBusy, setFolderBusy] = useState(false),
-    [folderMenu, setFolderMenu] = useState(null),
-    [deleteFolder, setDeleteFolder] = useState(null);
-  const folders = folderData?.folders || [];
-  const refreshNavigation = () => Promise.all([reloadFolders(), reloadProjects(), reloadBilling()]);
+  const refreshNavigation = () => Promise.all([reloadProjects(), reloadBilling()]);
   function setSidebarCollapsed(value) {
     setCollapsed(value);
     localStorage.setItem(preferenceKey, String(value));
@@ -119,23 +109,6 @@ export default function WorkspaceLayout() {
       controller.abort();
     };
   }, [searchOpen, searchQuery]);
-  async function saveFolder(event) {
-    event.preventDefault();
-    if (folderBusy) return;
-    setFolderBusy(true);
-    try {
-      if (folderDialog.id)
-        await api.patch('/folders/' + folderDialog.id, { name: folderName.trim() });
-      else await api.post('/folders', { name: folderName.trim() });
-      setFolderDialog(null);
-      setFoldersOpen(true);
-      await refreshNavigation();
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setFolderBusy(false);
-    }
-  }
   async function changeTheme(next) {
     if (next === theme || themeBusy) return;
     const previous = theme;
@@ -204,12 +177,7 @@ export default function WorkspaceLayout() {
             aria-label="New project"
             title="New project"
             onClick={() => {
-              navigate(
-                '/projects?new=true' +
-                  (new URLSearchParams(location.search).get('folderId')
-                    ? '&folderId=' + new URLSearchParams(location.search).get('folderId')
-                    : ''),
-              );
+              navigate('/projects?new=true');
               setOpen(false);
             }}
           >
@@ -240,101 +208,14 @@ export default function WorkspaceLayout() {
               to="/library"
               aria-label="Projects"
               title="Projects"
-              aria-current={new URLSearchParams(location.search).get('folderId') ? false : 'page'}
-              className={({ isActive }) =>
-                isActive && !new URLSearchParams(location.search).get('folderId') ? 'active' : ''
-              }
+              aria-current="page"
+              className={({ isActive }) => (isActive ? 'active' : '')}
               onClick={() => setOpen(false)}
             >
               <MessageSquare size={17} />
               <span className="nav-label">Projects</span>
             </NavLink>
           </nav>
-          <div className="folder-navigation-heading">
-            <button
-              className="sidebar-section-toggle"
-              aria-label="Folders"
-              aria-expanded={foldersOpen}
-              onClick={() => {
-                if (collapsed) setSidebarCollapsed(false);
-                setFoldersOpen(collapsed || !foldersOpen);
-              }}
-            >
-              <Folder size={15} />
-              <span className="nav-label">Folders</span>
-              <ChevronDown
-                size={13}
-                className={foldersOpen ? 'section-chevron open' : 'section-chevron'}
-              />
-            </button>
-            <button
-              className="icon-button folder-create"
-              aria-label="Create folder"
-              title="Create folder"
-              onClick={() => {
-                setFolderName('');
-                setFolderDialog({});
-              }}
-            >
-              <FolderPlus size={15} />
-            </button>
-          </div>
-          {foldersOpen && (
-            <div className="folder-navigation">
-              {folders.map((folder) => (
-                <div className="folder-nav-row" key={folder.id}>
-                  <Link
-                    to={'/library?folderId=' + folder.id}
-                    aria-current={
-                      new URLSearchParams(location.search).get('folderId') === folder.id
-                        ? 'page'
-                        : undefined
-                    }
-                    className={
-                      new URLSearchParams(location.search).get('folderId') === folder.id
-                        ? 'folder-selected'
-                        : ''
-                    }
-                    onClick={() => setOpen(false)}
-                  >
-                    <Folder size={15} />
-                    <span>{folder.name}</span>
-                    <small>{folder.projectCount}</small>
-                  </Link>
-                  {folder.writable && (
-                    <button
-                      className="icon-button"
-                      aria-label={'Actions for folder ' + folder.name}
-                      onClick={() => setFolderMenu(folderMenu === folder.id ? null : folder.id)}
-                    >
-                      <MoreHorizontal size={14} />
-                    </button>
-                  )}
-                  {folderMenu === folder.id && (
-                    <div className="folder-actions">
-                      <button
-                        onClick={() => {
-                          setFolderName(folder.name);
-                          setFolderDialog(folder);
-                          setFolderMenu(null);
-                        }}
-                      >
-                        Rename folder
-                      </button>
-                      <button
-                        onClick={() => {
-                          setDeleteFolder(folder);
-                          setFolderMenu(null);
-                        }}
-                      >
-                        Delete folder
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
           <div className="sidebar-recents">
             <button
               className="sidebar-section-toggle"
@@ -479,7 +360,7 @@ export default function WorkspaceLayout() {
           </button>
         </div>
         <div className="workspace-scroll">
-          <Outlet context={{ folders, refreshNavigation }} />
+          <Outlet context={{ refreshNavigation }} />
         </div>
       </div>
       <Modal
@@ -523,53 +404,6 @@ export default function WorkspaceLayout() {
             ))
           )}
         </div>
-      </Modal>
-      <Modal
-        open={!!folderDialog}
-        onOpenChange={(value) => !value && setFolderDialog(null)}
-        title={folderDialog?.id ? 'Rename folder' : 'Create folder'}
-      >
-        <form className="form-stack" onSubmit={saveFolder}>
-          <label>
-            Folder name
-            <input
-              autoFocus
-              required
-              maxLength={80}
-              value={folderName}
-              onChange={(event) => setFolderName(event.target.value)}
-            />
-          </label>
-          <button className="primary-button" disabled={folderBusy}>
-            {folderBusy ? 'Saving…' : folderDialog?.id ? 'Save folder name' : 'Create folder'}
-          </button>
-        </form>
-      </Modal>
-      <Modal
-        open={!!deleteFolder}
-        onOpenChange={(value) => !value && setDeleteFolder(null)}
-        title="Delete folder?"
-        description="Your projects will stay saved and move to All projects."
-      >
-        <button
-          className="danger-button"
-          onClick={async () => {
-            try {
-              await api.delete('/folders/' + deleteFolder.id, {
-                data: { confirmation: 'DELETE FOLDER' },
-              });
-              if (new URLSearchParams(location.search).get('folderId') === deleteFolder.id)
-                navigate('/library');
-              setDeleteFolder(null);
-              await refreshNavigation();
-              toast.success('Folder deleted. Projects kept.');
-            } catch (error) {
-              toast.error(error.message);
-            }
-          }}
-        >
-          Delete folder {deleteFolder?.name}
-        </button>
       </Modal>
     </div>
   );
