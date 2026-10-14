@@ -15,6 +15,32 @@ export default function PublishTools({ project }) {
   if (error) return <ErrorState message={error} retry={reload} />;
   if (!data) return <p className="muted">Checking publication…</p>;
   const built = project.settings.validatedRevision === project.revision;
+  const target = project.settings.buildPlan?.target;
+  if (['mobile', 'desktop'].includes(target))
+    return (
+      <div className="form-stack">
+        <h3>
+          {target === 'mobile'
+            ? 'Create your phone app packages'
+            : 'Create your desktop installers'}
+        </h3>
+        <p>
+          {built
+            ? 'The current UI has passed its build and browser checks.'
+            : 'Build and verify the application first.'}{' '}
+          Native package and device checks are separate.
+        </p>
+        <a className="secondary-button" href={'/v1/projects/' + project.id + '/export'}>
+          Download complete project
+        </a>
+        <p className="muted">
+          {target === 'mobile'
+            ? 'Use your Expo account for Android/iPhone builds. Your downloaded project includes the build configuration and guide. Before distribution, resolve the recorded Expo build-tool dependency advisories and run device checks. App-store publishing requires your developer accounts and approval.'
+            : 'Your project includes an OS build workflow for Windows, macOS and Linux. Installers need OS testing, signing and macOS notarization before public distribution.'}
+        </p>
+      </div>
+    );
+
   return (
     <div className="form-stack">
       <h3>Ready to share it?</h3>

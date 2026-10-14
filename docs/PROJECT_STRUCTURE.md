@@ -8,6 +8,7 @@ Publishing checkouts live under ignored `.local/repositories/`. `python3 GotchaS
 - `GotchaSaaS-Backend/Providers/`: OpenRouter, voice transcription, E2B, database and deployment adapters.
 - `GotchaSaaS-Backend/Services/`: authentication, projects, folders, credit ledger, jobs, preview leases and infrastructure operations.
 - `GotchaSaaS-Backend/Models/` and `Migrations/`: persistent control-plane data. Use migrations; never synchronize/destructively recreate production tables.
+- `GotchaSaaS-Backend/Build/`: application target/language planning, protected mobile/desktop/PWA/Python scaffolds and isolated PWA preview origin.
 - `GotchaSaaS-Backend/Templates/`: trusted source scaffolds, including the Express/PostgreSQL app starter.
 - `GotchaSaaS-Backend/Sandbox/`: pinned dependency manifest and trusted browser/runtime drivers for the E2B image.
 - `GotchaSaaS-Frontend/src/components/VoiceInput.jsx`: microphone, actual waveform, stop/cancel and transcript insertion.
@@ -35,3 +36,5 @@ A founder can stay entirely in chat. Generated source directories are maintained
 References: [Codex browser beside chat](https://learn.chatgpt.com/docs/browser?surface=app), [Lovable optional GitHub sync](https://docs.lovable.dev/integrations/github), [E2B cloud sandboxes](https://docs.e2b.dev/). These references do not establish that Codex or Lovable uses E2B internally.
 
 The root contains only the two application directories, npm coordination files and README. Browser tests/configuration and asset provenance live in GotchaSaaS-Frontend; shared documentation lives in GotchaSaaS-Backend/docs. Generated test output is stored under the frontend’s hidden .local directory. Original unused source PNGs and obsolete test output were moved to Trash; runtime JPEG images are retained.
+
+Target-specific source adds `app.json`/`eas.json` and React Native components for mobile, protected `desktop/` and a manual OS package workflow for Electron, or `public/manifest.webmanifest`/`public/sw.js` for PWAs. Python APIs use `server/app.py` and pinned requirements. Framework questions appear only for missing explicit preferences; unsupported choices are retained without silent substitution. See [MULTI_TARGET_STRATEGY.md](MULTI_TARGET_STRATEGY.md).

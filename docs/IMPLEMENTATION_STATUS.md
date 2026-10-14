@@ -20,22 +20,22 @@ Updated 14 October 2026. The local integration workspace runs React/Vite on port
 
 ## Actual checks
 
-| Check                                       | Result                                                                                       |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Backend unit/PostgreSQL/security tests      | 74 passed, zero failures                                                                     |
-| Browser workflows                           | 17 passed across the recent suite and focused reruns, zero unresolved failures               |
-| Syntax and production build                 | Passed                                                                                       |
-| npm production and sandbox dependency audit | Zero vulnerabilities reported                                                                |
-| Migrations 006–008 down/up                  | Existing source preserved on isolated migration DB                                           |
-| Real OpenRouter STT call                    | Synthetic English audio transcribed correctly; cost returned                                 |
-| Real E2B backend                            | Signup, rejected invalid login, valid login, persistent CRUD and cross-user isolation passed |
-| Real agent generation                       | Luna generated tic-tac-toe; compiled checks and 32 game assertions passed; revision applied  |
-| Downloaded game offline                     | Same 32 assertions passed in Chrome offline; HTML and source ZIP retained locally            |
-| Public hosting review                       | Actual configuration blockers shown; explicit revision-bound approval tested with mocks      |
-| Real preview lifecycle                      | Paused sandbox resumed; explicit lease and cookie-isolated API CRUD passed                   |
-| Real network isolation                      | Internet/metadata requests blocked; unauthenticated public ingress returned 403              |
-| Real public research and search             | DNS-pinned Vite docs fetch and OpenRouter bounded search returned source URLs                |
-| General live-provider contract suite        | Nine disabled/unconfigured tests remain skipped; not counted as successes                    |
+| Check                                  | Result                                                                                       |
+| -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Backend unit/PostgreSQL/security tests | 86 passed, zero failures                                                                     |
+| Browser workflows                      | 20 passed, zero failures                                                                     |
+| Syntax and production build            | Passed                                                                                       |
+| Platform production dependency audit   | Zero vulnerabilities reported                                                                |
+| Migrations 006–008 down/up             | Existing source preserved on isolated migration DB                                           |
+| Real OpenRouter STT call               | Synthetic English audio transcribed correctly; cost returned                                 |
+| Real E2B backend                       | Signup, rejected invalid login, valid login, persistent CRUD and cross-user isolation passed |
+| Real agent generation                  | Luna generated tic-tac-toe; compiled checks and 32 game assertions passed; revision applied  |
+| Downloaded game offline                | Same 32 assertions passed in Chrome offline; HTML and source ZIP retained locally            |
+| Public hosting review                  | Actual configuration blockers shown; explicit revision-bound approval tested with mocks      |
+| Real preview lifecycle                 | Paused sandbox resumed; explicit lease and cookie-isolated API CRUD passed                   |
+| Real network isolation                 | Internet/metadata requests blocked; unauthenticated public ingress returned 403              |
+| Real public research and search        | DNS-pinned Vite docs fetch and OpenRouter bounded search returned source URLs                |
+| General live-provider contract suite   | Nine disabled/unconfigured tests remain skipped; not counted as successes                    |
 
 The recorded small end-to-end agent change used GPT-6 Luna for five calls: OpenRouter reported $0.00120540915, elapsed sandbox cost was estimated at $0.002152984, and settlement charged four ledger credits. This is one simple edit, not a price estimate for a complete application or an E2B invoice. Its synthetic project/user/sandbox were removed after verification. Real-user source and credentials were not used for this test.
 
@@ -52,3 +52,11 @@ See [harness/routing/economics](HARNESS_STRATEGY.md), [voice](VOICE_INPUT.md), [
 ## Latest refinement
 
 Platform storage migrated to Neon with all existing data verified. New usage has configurable contribution pricing and job policy snapshots; administration reports measured token/cost/credit totals. Chat has stronger dark/light glass, no model label, borderless modals, and a smoothly animated preview with an accessible draggable divider, expandable browser and real preview document address. User-facing branding is Gotcha SaaS. Internal compatibility paths for the already-built E2B image and legacy preview bridges remain supported.
+
+## Multi-target release
+
+Web, PWA, Expo/React Native and protected Electron source targets are implemented with server-owned plans, explicit-language framework questions and sensible defaults. React JavaScript, Node/Express and Python FastAPI/Flask/Django have tested adapters; unsupported preferences are preserved and blocked before paid generation. Native mobile with Python and desktop with server features remain gated pending reviewed adapters. Expo/JavaScript is available as well as Expo/TypeScript.
+
+Real Luna-generated mobile, PWA and desktop water trackers completed browser checks. The generated PWA passed real offline reload/interactions. The generated desktop app passed Add/Reset in an unsigned macOS native window with isolation enabled. Android/iOS packages/device tests and Windows/Linux packages are not verified. Expo credentials are deferred at the owner's request. Full strategy, cost records, current test counts and delivery dependencies: [MULTI_TARGET_STRATEGY.md](MULTI_TARGET_STRATEGY.md).
+
+Expo build-tool dependency advisories remain a native release gate; UUID is patched, but braces/node-forge currently have no patched upstream release. See the target strategy for the advisory links and isolation limits.

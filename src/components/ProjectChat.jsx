@@ -60,6 +60,21 @@ export default function ProjectChat({ id }) {
     [toolTab, setToolTab] = useState('source'),
     [lease, setLease] = useState(null);
   const [verificationBusy, setVerificationBusy] = useState(false);
+  const [planningOpen, setPlanningOpen] = useState(false),
+    [planAnswer, setPlanAnswer] = useState(''),
+    [planError, setPlanError] = useState(''),
+    [resumePlan, setResumePlan] = useState(false);
+  const planQuestion = data?.project.settings.buildPlan?.questions.find((q) => !q.answer);
+  useEffect(() => {
+    setPlanAnswer('');
+    setPlanError('');
+  }, [planQuestion?.id]);
+  useEffect(() => {
+    if (resumePlan && project && !planQuestion && !busy) {
+      setResumePlan(false);
+      send(undefined, pendingPrompt || project.description);
+    }
+  }, [resumePlan, planQuestion?.id, busy]);
   const [chatWidth, setChatWidth] = useState(() => {
     const saved = Number(localStorage.getItem('gotcha-preview-chat-width'));
     return saved >= 0.18 && saved <= 0.7 ? saved : 0.46;
@@ -254,6 +269,24 @@ export default function ProjectChat({ id }) {
     setPendingPrompt(prompt);
     sessionStorage.setItem('gotcha-studio-prompt:' + id, prompt);
     try {
+      let setupQuestion = planQuestion;
+      if (
+        project.revision === 0 &&
+        project.settings.templatePristine &&
+        !project.description.trim() &&
+        !project.settings.buildPlan?.intentCaptured
+      ) {
+        const { data: prepared } = await api.post('/projects/' + id + '/build-plan/prepare', {
+          prompt,
+        });
+        await reload();
+        setupQuestion = prepared.plan.questions.find((q) => !q.answer);
+      }
+      if (setupQuestion) {
+        setPlanningOpen(true);
+        setNotice('A quick setup question before we build. Your idea is saved here.');
+        return;
+      }
       if (!data.messages.some((m) => m.role === 'user' && !m.jobId && m.content === prompt)) {
         if (!attempt.current || attempt.current.prompt !== prompt)
           attempt.current = { id: crypto.randomUUID(), prompt };
@@ -663,6 +696,38 @@ export default function ProjectChat({ id }) {
               </button>
             </div>
           </div>
+          {project.settings.buildPlan?.target === 'pwa' && (
+            <div className="preview-target-note">
+              Installable web app
+              <button
+                className="text-button"
+                onClick={async () => {
+                  try {
+                    const popup = window.open('about:blank', '_blank');
+                    if (popup) popup.opener = null;
+                    const { data } = await api.post('/projects/' + id + '/pwa-preview');
+                    if (popup) popup.location.replace(data.url);
+                    else
+                      setNotice(
+                        'Allow this site to open the install/offline preview, then try again.',
+                      );
+                  } catch (e) {
+                    setNotice(e.message);
+                  }
+                }}
+              >
+                Test installation & offline
+              </button>
+            </div>
+          )}
+          {['mobile', 'desktop'].includes(project.settings.buildPlan?.target) && (
+            <div className="preview-target-note">
+              {project.settings.buildPlan.target === 'mobile'
+                ? 'Phone UI preview · native device verification is separate'
+                : 'Desktop UI preview · installers are built separately'}
+              <a href={'/v1/projects/' + id + '/export'}>Download project</a>
+            </div>
+          )}
           {project.template === 'fullstack' && (
             <div className="chat-preview-runtime">
               <span>
@@ -699,6 +764,7 @@ export default function ProjectChat({ id }) {
           <iframe
             key={previewKey}
             ref={iframe}
+            className={project.settings.buildPlan?.target === 'mobile' ? 'phone-preview' : ''}
             title="Your app preview"
             sandbox="allow-scripts allow-forms"
             referrerPolicy="no-referrer"
@@ -715,6 +781,66 @@ export default function ProjectChat({ id }) {
           />
         </aside>
       )}
+      <Modal
+        open={planningOpen && !!planQuestion}
+        onOpenChange={setPlanningOpen}
+        title={planQuestion?.title || 'Project setup'}
+        description="Choose an option or type your preference. Building waits for this answer; no generation credits have been used."
+      >
+        {planQuestion && (
+          <form
+            className="form-stack"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!planAnswer.trim() || busy) return;
+              setBusy(true);
+              setPlanError('');
+              try {
+                await api.post('/projects/' + id + '/build-plan/answer', {
+                  questionId: planQuestion.id,
+                  answer: planAnswer.trim(),
+                });
+                await reload();
+                setResumePlan(true);
+              } catch (error) {
+                setPlanError(error.message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            <p>{planQuestion.question}</p>
+            <div className="agent-answer-options">
+              {planQuestion.options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={planAnswer === option.value ? 'answer-selected' : ''}
+                  aria-pressed={planAnswer === option.value}
+                  onClick={() => setPlanAnswer(option.value)}
+                >
+                  {option.label}
+                  {planAnswer === option.value && <Check size={14} />}
+                </button>
+              ))}
+            </div>
+            <label>
+              Your preference
+              <input
+                aria-label="Your framework preference"
+                maxLength={160}
+                value={planAnswer}
+                onChange={(e) => setPlanAnswer(e.target.value)}
+                placeholder="Or type a different choice…"
+              />
+            </label>
+            {planError && <p role="alert">{planError}</p>}
+            <button className="primary-button" disabled={busy || !planAnswer.trim()}>
+              Continue
+            </button>
+          </form>
+        )}
+      </Modal>
       <Modal
         open={!!question}
         onOpenChange={(open) => !open && setQuestionId(null)}

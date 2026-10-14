@@ -39,6 +39,7 @@ function ProjectHome({ library }) {
   const [references, setReferences] = useState([]);
   const [referenceBusy, setReferenceBusy] = useState(false);
   const [starter, setStarter] = useState('auto');
+  const [target, setTarget] = useState('auto');
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -114,6 +115,7 @@ function ProjectHome({ library }) {
         name: empty ? newName.trim() : intent.split('\n')[0].slice(0, 80),
         description: intent,
         template,
+        build: { target },
       });
       if (intent) sessionStorage.setItem('gotcha-studio-prompt:' + data.project.id, intent);
       if (references.length && !empty)
@@ -167,6 +169,20 @@ function ProjectHome({ library }) {
                   <span>Options</span>
                 </summary>
                 <div className="composer-options-panel">
+                  <label>
+                    Build for
+                    <select
+                      aria-label="Application type"
+                      value={target}
+                      onChange={(e) => setTarget(e.target.value)}
+                    >
+                      <option value="auto">Choose from my idea</option>
+                      <option value="web">Website / web application</option>
+                      <option value="pwa">Installable web app</option>
+                      <option value="mobile">iPhone / Android application</option>
+                      <option value="desktop">Windows / macOS / Linux application</option>
+                    </select>
+                  </label>
                   <label>
                     Starter
                     <select

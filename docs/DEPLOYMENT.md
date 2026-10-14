@@ -40,3 +40,11 @@ export default {
 ```
 
 Custom domains, provider metrics, server bindings and full-stack generated deployment remain unavailable. Never enable unlimited paid resources.
+
+## Multi-target images and preview hosting
+
+The base image serves web/PWA/desktop renderers. Run `npm run runtime:mobile` and `npm run runtime:python` to prepare separate approved offline images; they record `E2B_MOBILE_TEMPLATE_ID` and `E2B_PYTHON_TEMPLATE_ID` in the ignored local environment. Image creation is metered operator work, not a customer tool. All three images are configured in the current local environment. The scripts pin dependency locks before building; new images need contract verification before registration.
+
+Install/offline testing uses a separate PWA preview server, default port 7015. Production needs `APP_PREVIEW_ORIGIN=https://preview.example-other-domain.com`, `APP_PREVIEW_PORT`, wildcard DNS/TLS and a reverse proxy preserving each project's host. Use a separate root domain from the control plane. Signed project/user/revision tickets protect online access. Service workers cache only the application shell/manifest; database synchronization is not implicit. The worker cannot intercept the Gotcha platform origin.
+
+Native artifacts are source exports with Expo EAS or a manual Electron OS matrix. They are excluded from the Cloudflare web publisher. Connect Expo later as agreed; package/device checks, signing and store release remain separate stages. Source ZIPs contain guides and remap the protected desktop workflow into `.github/workflows/desktop-build.yml`. No app-store submission or GitHub workflow is triggered automatically. [Target strategy](MULTI_TARGET_STRATEGY.md) describes supported stacks and honest delivery limits.
