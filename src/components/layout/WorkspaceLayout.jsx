@@ -38,7 +38,7 @@ const manageRoutes = [
 export default function WorkspaceLayout() {
   const { user, logout, refresh } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { data, error: billingError, reload: reloadBilling } = useData('/billing');
+  const { data, error: billingError, reload: reloadBilling } = useData('/billing/summary');
   const { data: projectData, reload: reloadProjects } = useData('/projects');
   const navigate = useNavigate(),
     location = useLocation();
