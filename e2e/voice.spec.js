@@ -53,7 +53,6 @@ test('voice waveform cancels without uploading and inserts dictation in home and
       json: {
         text: 'Build a customer dashboard',
         chargedCredits: 1,
-        model: 'microsoft/mai-transcribe-2',
       },
     });
   });

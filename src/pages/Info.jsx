@@ -21,7 +21,7 @@ const content = {
   privacy: [
     'Privacy policy · draft for legal review',
     'This policy has not been reviewed by legal counsel. Do not publish it as a finalized policy.',
-    'The platform stores account information, projects, source, conversation messages, operational records, and usage records in PostgreSQL. Generated source and project context are sent to configured AI providers; builds run in E2B. Resource creation uses the providers you approve.',
+    'The platform stores account information, projects, source, conversation messages, operational records, and usage records in PostgreSQL. Generated source and project context are processed by third-party AI model providers, and builds run in isolated cloud build environments. Resource creation uses the providers you approve.',
     'You can export account data and project source. Account deletion is blocked until active subscriptions, jobs, and paid external resources have been resolved. Retention automation and compliance certification are not implemented.',
   ],
   terms: [

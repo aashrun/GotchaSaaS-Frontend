@@ -25,7 +25,7 @@ export default function Billing() {
       <PageHeader
         eyebrow="CLEAR COSTS. MORE CONTROL."
         title="Your ambition, accounted for."
-        description="Real credit balances, measured token usage, and limits you choose."
+        description="Real credit balances, exact usage, and limits you choose."
       />
       {error ? (
         <ErrorState message={error} retry={reload} />
@@ -44,8 +44,8 @@ export default function Billing() {
                 {data.account.reserved} reserved · {data.account.balance} total balance
               </p>
               <small>
-                Builds use measured provider costs plus a service margin. Unused reservations return
-                automatically.
+                Each build is charged for the work it actually did. A build that doesn’t finish is
+                free, and unused holds return automatically.
               </small>
             </article>
             <article className="panel">
@@ -59,9 +59,9 @@ export default function Billing() {
               <button
                 disabled={busy}
                 className="secondary-button"
-                onClick={() => redirect(data.subscription?.customerId ? 'portal' : 'checkout')}
+                onClick={() => redirect(data.subscription?.manageable ? 'portal' : 'checkout')}
               >
-                {data.subscription?.customerId ? 'Manage subscription' : 'View configured plan'}
+                {data.subscription?.manageable ? 'Manage subscription' : 'View configured plan'}
                 <ArrowUpRight size={16} />
               </button>
             </article>
@@ -129,39 +129,15 @@ export default function Billing() {
             </div>
           </section>
           <section className="panel">
-            <h3>Measured AI usage</h3>
-            {!data.usage.length ? (
-              <p className="muted">No model calls have been recorded yet.</p>
-            ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Input tokens</th>
-                      <th>Output tokens</th>
-                      <th>Estimated provider cost</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.usage.map((u) => (
-                      <tr key={u.id}>
-                        <td>{new Date(u.createdAt).toLocaleDateString()}</td>
-                        <td>{u.inputTokens}</td>
-                        <td>{u.outputTokens}</td>
-                        <td>
-                          ${u.estimatedUsd.toFixed(5)}{' '}
-                          {u.costSource === 'provider_reported' ? '(reported)' : '(estimated)'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <h3>How credits are counted</h3>
+            <p>
+              Before a build starts we place a temporary hold for its maximum cost. When it
+              finishes, you pay only for the work it actually did — the AI steps it took and the
+              time its private build computer ran — and the rest of the hold returns at once.
+            </p>
             <small>
-              Costs use provider-reported usage where available; otherwise recorded tokens and
-              configured rates. Sandbox compute is estimated. Invoice reconciliation is pending.
+              Usage is metered to a millionth of a credit. Whole credits are charged and the
+              fraction carries to your next build, so rounding never adds to your bill.
             </small>
           </section>
           <div className="notice">

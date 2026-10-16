@@ -2585,6 +2585,13 @@ summary:focus-visible {
   padding-left: 18px;
   line-height: 1.8;
 }
+.chat-job-credits {
+  display: block;
+  margin-top: 2px;
+  padding-left: 24px;
+  font-size: 11px;
+  color: var(--muted);
+}
 .chat-notice {
   background: var(--glass);
   border-radius: 18px;
@@ -2823,23 +2830,6 @@ summary:focus-visible {
   }
 }
 
-.chat-answer {
-  width: fit-content;
-  max-width: min(80%, 460px);
-  font-size: 12px;
-  padding: 12px 16px;
-  margin: 16px 0 16px auto;
-  border-radius: 16px;
-  background: var(--surface);
-}
-.chat-answer small {
-  color: var(--muted);
-}
-.chat-answer p {
-  margin-bottom: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
 .auth-page .auth-form .form-stack .primary-button,
 [data-theme='light'] .auth-page .auth-form .primary-button:hover {
   border: 0;

@@ -57,6 +57,144 @@ function AdminPanel() {
             New usage targets {data.economics.pricing.grossMarginPercent}% contribution.{' '}
             {data.economics.note}
           </p>
+          <p className="muted">
+            Prompt cache hit rate {Math.round((data.economics.cacheHitRate || 0) * 100)}% ·
+            provider-billed cost on {Math.round((data.economics.providerReportedShare || 0) * 100)}%
+            of model calls
+          </p>
+          {!!data.economics.routing?.length && (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Task tier</th>
+                    <th>Builds</th>
+                    <th>Completed</th>
+                    <th>Avg credits</th>
+                    <th>Avg calls</th>
+                    <th>Escalated</th>
+                    <th>Jev agreed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.economics.routing.map((r) => (
+                    <tr key={r.tier}>
+                      <td>{r.tier}</td>
+                      <td>{r.jobs}</td>
+                      <td>{r.jobs ? Math.round((r.completed / r.jobs) * 100) + '%' : '—'}</td>
+                      <td>{r.avgChargedCredits.toFixed(1)}</td>
+                      <td>{r.avgCalls.toFixed(1)}</td>
+                      <td>{r.escalated}</td>
+                      <td>{r.triaged ? r.triageAgreed + ' / ' + r.triaged : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
+      {data?.routing && (
+        <section className="panel form-stack">
+          <h3>Model routing</h3>
+          <p className="muted">
+            {data.routing.developmentLock
+              ? 'Development lock is on: every job runs on GPT-6 Luna. Set DEVELOPMENT_MODEL_LOCK=off to use quality routing locally.'
+              : 'Quality routing is active.'}{' '}
+            Jev job sizing: {data.routing.triage}.
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Job size</th>
+                  <th>Kind of work</th>
+                  <th>Starts on, then climbs after failed checks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.routing.table.map((row) => (
+                  <tr key={row.size + row.domain}>
+                    <td>{row.size}</td>
+                    <td>{row.domain.replace('_', ' ')}</td>
+                    <td>
+                      {row.ladder
+                        .map((v) => v.model.split('/')[1] + ' · ' + v.effort + ' (' + v.score + ')')
+                        .join(' → ')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="muted">
+            Agent runtime for new jobs: {data.routing.runtime.version}
+            {data.routing.runtime.version === 'v2'
+              ? ` (project shell ${data.routing.runtime.shell ? 'on' : 'off'}, specialists ${data.routing.runtime.orchestration ? 'on' : 'off'})`
+              : ''}
+            .
+          </p>
+          {data.routing.outcomes.length > 0 && (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Job size</th>
+                    <th>Kind of work</th>
+                    <th>Started on</th>
+                    <th>Jobs</th>
+                    <th>Clean successes</th>
+                    <th>Estimated rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.routing.outcomes.map((o) => (
+                    <tr key={o.size + o.domain + o.variant}>
+                      <td>{o.size}</td>
+                      <td>{o.domain.replace('_', ' ')}</td>
+                      <td>{o.variant.replace(':', ' · ')}</td>
+                      <td>{o.jobs}</td>
+                      <td>{o.clean}</td>
+                      <td>
+                        {Math.round(o.estimate * 100)}%{o.demoted ? ' · skipped as start' : ''}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={async () => {
+              try {
+                const { data: result } = await api.post('/admin/models/sync-benchmarks');
+                const updated = result.changes.filter((c) => c.status === 'updated').length;
+                toast.success(
+                  updated + ' model benchmark' + (updated === 1 ? '' : 's') + ' refreshed',
+                );
+                await reload();
+              } catch (e) {
+                toast.error(e.message);
+              }
+            }}
+          >
+            Refresh benchmarks
+          </button>
+          <small className="muted">
+            Scores are Intelligence Index values by reasoning effort; measured results from the last
+            90 days can move a start past a variant that keeps failing. Benchmark data:{' '}
+            <a href="https://artificialanalysis.ai/" target="_blank" rel="noreferrer">
+              Artificial Analysis
+            </a>
+            {data.routing.benchmarks.some((b) => b.syncedAt)
+              ? ' · refreshed ' +
+                new Date(
+                  Math.max(...data.routing.benchmarks.map((b) => Date.parse(b.syncedAt) || 0)),
+                ).toLocaleDateString('en-IN')
+              : ' · October 2026 snapshot'}
+          </small>
         </section>
       )}
       <form
@@ -130,10 +268,28 @@ function AdminPanel() {
           </label>
         </div>
         <button className="primary-button">Save model</button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={async () => {
+            try {
+              const { data: result } = await api.post('/admin/models/sync-prices');
+              const updated = result.changes.filter((c) => c.status === 'updated').length;
+              toast.success(updated + ' model price' + (updated === 1 ? '' : 's') + ' refreshed');
+              await reload();
+            } catch (e) {
+              toast.error(e.message);
+            }
+          }}
+        >
+          Refresh prices from OpenRouter
+        </button>
         {data?.models.map((m) => (
           <p className="muted" key={m.id}>
-            {m.name} · {m.provider}/{m.model} · input ${m.inputUsdPerMillion} / output $
-            {m.outputUsdPerMillion}
+            {m.name} · {m.provider}/{m.model} · input ${m.inputUsdPerMillion}
+            {m.cachedInputUsdPerMillion != null &&
+              ' (cached $' + m.cachedInputUsdPerMillion + ')'}{' '}
+            / output ${m.outputUsdPerMillion}
           </p>
         ))}
       </form>

@@ -315,6 +315,7 @@ export default function ProjectChat({ id }) {
         references,
         idempotencyKey: attempt.current.id,
         maxCredits: estimate.max,
+        ...(estimate.routingTicket ? { routingTicket: estimate.routingTicket } : {}),
       });
       setDraft('');
       setPendingPrompt('');
@@ -419,6 +420,9 @@ export default function ProjectChat({ id }) {
                 <JobActivity
                   job={data.jobs.find((j) => j.id === message.jobId)}
                   events={events[message.jobId] || []}
+                  answers={questions.filter(
+                    (q) => q.jobId === message.jobId && q.state === 'answered',
+                  )}
                 />
               )}
             </div>
@@ -488,14 +492,6 @@ export default function ProjectChat({ id }) {
             </div>
           )}
           {error && <ErrorState message={error} retry={reload} />}
-          {questions
-            .filter((q) => q.state === 'answered' && data.jobs.some((j) => j.id === q.jobId))
-            .map((q) => (
-              <div className="chat-answer" key={q.id}>
-                <small>{q.title}</small>
-                <p>{q.answer}</p>
-              </div>
-            ))}
           {outstanding.map((q) => (
             <button key={q.id} className="chat-question-chip" onClick={() => showQuestion(q)}>
               <span>
@@ -509,20 +505,27 @@ export default function ProjectChat({ id }) {
           ))}
           {active?.state === 'paused' && !outstanding.length && (
             <div className="chat-notice">
-              <p>{active.error || active.stage || 'Work paused. Your source is saved.'}</p>
+              <p>{active.error || active.stage || 'Paused. Your work is saved.'}</p>
               <button
                 className="text-button"
                 disabled={busy}
                 onClick={async () => {
                   try {
-                    await api.post('/ai/jobs/' + active.id + '/resume');
+                    // An interrupted run cannot be resumed safely; stopping releases its hold.
+                    await api.post(
+                      '/ai/jobs/' +
+                        active.id +
+                        (active.result?.pauseReason === 'interrupted' ? '/cancel' : '/resume'),
+                    );
                     await reload();
                   } catch (e) {
                     setNotice(e.message);
                   }
                 }}
               >
-                Resume saved work
+                {active.result?.pauseReason === 'interrupted'
+                  ? 'Stop this run'
+                  : 'Resume saved work'}
               </button>
             </div>
           )}
@@ -903,16 +906,29 @@ export default function ProjectChat({ id }) {
     </main>
   );
 }
-function JobActivity({ job, events }) {
+// Answers to the agent's questions stay with the build they belong to, inside its activity,
+// instead of being pinned to the end of the conversation as if the user had typed them.
+function JobActivity({ job, events, answers = [] }) {
   if (!job) return null;
   const running = !terminal.includes(job.state) && job.state !== 'paused';
+  const status =
+    job.state === 'failed'
+      ? 'Stopped before finishing'
+      : events.at(-1)?.message || job.stage || job.state;
   return (
     <div className="chat-job-activity">
       <div className={running ? 'agent-working' : 'agent-status'} role="status">
         {running ? <i /> : job.state === 'completed' ? <Check size={14} /> : null}
-        <span>{events.at(-1)?.message || job.stage || job.state}</span>
+        <span>{status}</span>
       </div>
-      {!!events.length && (
+      {job.state === 'completed' && (
+        <small className="chat-job-credits">
+          {job.chargedCredits
+            ? 'Used ' + job.chargedCredits + (job.chargedCredits === 1 ? ' credit' : ' credits')
+            : 'No credits used'}
+        </small>
+      )}
+      {(!!events.length || !!answers.length) && (
         <details>
           <summary>
             Activity <ChevronDown size={12} />
@@ -921,13 +937,18 @@ function JobActivity({ job, events }) {
             {events.map((e) => (
               <li key={e.id}>{e.message}</li>
             ))}
+            {answers.map((q) => (
+              <li key={q.id}>
+                You answered “{q.title}”: {q.answer}
+              </li>
+            ))}
           </ol>
         </details>
       )}
       {job.state === 'failed' && (
         <p role="alert">
           {job.error ||
-            'The build stopped. Your existing source is preserved. You can send a revised prompt.'}
+            'I couldn’t finish this change, so your project is unchanged. Try again, or ask for a smaller first step.'}
         </p>
       )}
     </div>

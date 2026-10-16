@@ -87,10 +87,17 @@ export default function AgentTools({ projectId, canEdit }) {
       {evidence?.steps.map((step) => (
         <details key={step.id}>
           <summary>
-            {step.sequence + 1} · {step.role} · {step.state}
+            Step {step.sequence + 1} · {step.state}
           </summary>
-          <small>{step.modelSnapshot?.model}</small>
-          <pre>{JSON.stringify(step.observation || step.error, null, 2)}</pre>
+          {step.activities.length ? (
+            <ul>
+              {step.activities.map((activity, i) => (
+                <li key={i}>{activity}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">No actions recorded in this step.</p>
+          )}
         </details>
       ))}
       {evidence?.artifacts.map((a) => (

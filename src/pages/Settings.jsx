@@ -120,7 +120,7 @@ export default function SettingsPage() {
             </button>
           </div>
         )}
-        {configuration?.mailMode === 'local' && (
+        {configuration?.localMail && (
           <button
             className="text-button local-mail-button"
             onClick={async () => {
