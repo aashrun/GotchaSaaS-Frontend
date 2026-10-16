@@ -1,5 +1,7 @@
 # Agent runtime v2: baseline, plan and acceptance criteria
 
+> 17 October update: the local app now runs v2 after Neon migrations 012–014. Review fixes and expanded verification are described in [BUILD_READINESS.md](BUILD_READINESS.md). The delivery notes below describe the original 16 October implementation; its Expo/Python shell limitation has since been removed with separate checker-user verification.
+
 Written 16 October 2026 before implementation; the "Delivery status" section at the end records what was delivered and measured.
 
 ## Baseline (verified in code and in live sandboxes)
@@ -125,3 +127,26 @@ Use `AGENT_RUNTIME=v2` for development builds now. Before making it the producti
 - Measured-outcome routing needs at least 10 jobs per cell before it acts; it only demotes, never promotes below the owner's quality floors.
 - Prompt caching depends on the provider: GPT caches automatically through OpenRouter; Claude caching was not verified for the Responses API.
 - OpenCode was not run; no comparison with it is claimed.
+
+## Review corrections and acceptance (17 October 2026)
+
+The current local configuration is v2 and Neon migrations 012–014 are applied. The original limitations above are historical: Expo and Python now use separate checker users and support the coordinator's project shell. See [BUILD_READINESS.md](BUILD_READINESS.md) for the corrected readiness scope and remaining native distribution limits.
+
+Dependency restoration, protected retry manifests/deletions, bounded RE2 searches and diff computation, deferred-path shell checks, required-task completion, persistent security findings and execution of generated project tests are covered by regression tests. Installation now rebuilds a clean dependency tree using a trusted npm path rather than copying agent-writable dependencies into the checker. Full-stack browser validation tolerates only the expected server-owned unauthenticated session probe; console failures receive explicit repair feedback. PWA installation is separated from restricted mini-preview rendering.
+
+Final verification:
+
+| Check                                     | Result                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------ |
+| Backend suite                             | 130 passed, 9 optional provider contracts skipped, 0 failures                  |
+| Browser UI workflows                      | 20 passed against isolated local-mail fixtures                                 |
+| Live E2B boundary checks                  | 19 passed, including fresh lockfile restoration and failing project tests      |
+| Runtime contracts                         | 7 passed: Expo, Expo/Node, FastAPI, Flask, Django, Electron renderer and PWA   |
+| Real Luna generation                      | Node-backed web edit, Expo tracker, Electron tracker and PWA tracker completed |
+| Independent generated-app browser grading | All three trackers passed add/reset with no console errors                     |
+| Generated PWA offline contract            | Worker control, manifest icons, offline reload and offline interaction passed  |
+| Platform production dependency audit      | 0 reported vulnerabilities at verification time                                |
+
+The full-stack generated edit completed in six model calls; its runtime was paused and resumed, then signup and owned-record CRUD passed. The corrected PWA completed in seven calls. Earlier live failures identified and led to repairs of the auth-probe and PWA preview problems; they are not counted as passing runs. Tests used synthetic local-database accounts, not the owner's Neon data or account balance. Model and sandbox calls still consume provider credits.
+
+These results support controlled use of the supported build/test paths. They do not prove arbitrary software correctness, native device behaviour, Windows/Linux execution or production-scale reliability. Quality-routed premium models were not rerun; development remained on GPT-6 Luna. Interrupted unknown-outcome operations remain fenced rather than replayed. Customer GitHub and hosting integrations are outside this acceptance scope.
