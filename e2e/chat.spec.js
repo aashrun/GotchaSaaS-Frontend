@@ -23,6 +23,8 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
     answered = false;
   const jobId = randomUUID(),
     questionId = randomUUID();
+  let jobDetails = {},
+    activityEntries = null;
   await page.route('**/v1/ai/estimate', async (route) => {
     estimates++;
     const data = route.request().postDataJSON();
@@ -58,6 +60,7 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
                 ? 'Build and browser checks passed.'
                 : 'Updating the appointment planner',
           result: { engine: 'agent-v1', pauseReason: phase === 'paused' ? 'question' : null },
+          ...jobDetails,
         },
       ];
       data.messages[0].jobId = jobId;
@@ -77,7 +80,7 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
     route.fulfill({
       json: {
         questions:
-          blocking === undefined || !projectId
+          blocking == null || !projectId
             ? []
             : [
                 {
@@ -106,7 +109,7 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
       await new Promise((resolve) => setTimeout(resolve, 500));
       phase = 'completed';
     }
-    const messages = [
+    const messages = activityEntries || [
       { id: randomUUID(), sequence: 0, state: 'working', message: 'Updating src/App.tsx' },
       {
         id: randomUUID(),
@@ -130,7 +133,7 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
   await page.route('**/v1/ai/jobs/*/activity', (route) =>
     route.fulfill({
       json: {
-        events: [
+        events: activityEntries || [
           {
             id: randomUUID(),
             sequence: 0,
@@ -148,8 +151,117 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
       },
     }),
   );
-  return { idea, stats: () => ({ estimates, submissions, answered }) };
+  return {
+    idea,
+    stats: () => ({ estimates, submissions, answered }),
+    setBuild(next, details, entries) {
+      phase = next;
+      jobDetails = details;
+      activityEntries = entries;
+    },
+  };
 }
+test('app-specific progress groups repeats, keeps accurate clocks and shows an honest completion report', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(page, null);
+  const startedAt = new Date(Date.now() - 65000).toISOString();
+  const entries = [
+    { id: randomUUID(), sequence: 0, state: 'generating', message: 'Preparing the next changes.' },
+    ...Array.from({ length: 4 }, (_, i) => ({
+      id: randomUUID(),
+      sequence: i + 1,
+      createdAt: startedAt,
+      state: 'working',
+      message: 'Reviewed your booking form.',
+      progress: {
+        action: 'read',
+        phase: 'completed',
+        subject: 'your booking form',
+        note: 'Checking how your booking form saves appointments',
+      },
+    })),
+    ...['failed', 'started', 'completed'].map((phase, i) => ({
+      id: randomUUID(),
+      sequence: i + 5,
+      createdAt: startedAt,
+      state: 'working',
+      message:
+        phase === 'failed' ? 'This change needs another pass.' : 'Updating your booking form.',
+      progress: {
+        action: 'change',
+        phase,
+        subject: 'your booking form',
+        note: 'Fixing how your booking form saves appointments',
+      },
+    })),
+  ];
+  fixture.setBuild(
+    'working',
+    { createdAt: startedAt, timing: { startedAt, activeMs: 0, activeSince: startedAt } },
+    entries,
+  );
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  const activity = page.locator('.chat-job-activity');
+  await expect(activity).toContainText('Fixing how your booking form saves appointments');
+  await expect(activity.locator('.build-elapsed')).toContainText('Working');
+  const initial = await activity.locator('.build-elapsed time').textContent();
+  await expect.poll(() => activity.locator('.build-elapsed time').textContent()).not.toBe(initial);
+  await activity.locator('summary').click();
+  await expect(activity.locator('.build-timeline li')).toHaveCount(3);
+  await expect(activity.locator('.build-timeline li[data-phase="failed"]')).toHaveCount(1);
+  await expect(activity).not.toContainText('Preparing the next changes');
+  fixture.setBuild(
+    'paused',
+    {
+      stage: 'Paused. Your work is saved.',
+      timing: { startedAt, activeMs: 67000, activeSince: null },
+    },
+    entries,
+  );
+  await page.reload();
+  await expect(activity.locator('.build-elapsed')).toHaveText('Paused after 1m 07s');
+  await page.waitForTimeout(1200);
+  await expect(activity.locator('.build-elapsed')).toHaveText('Paused after 1m 07s');
+  fixture.setBuild(
+    'completed',
+    {
+      chargedCredits: 9,
+      timing: {
+        startedAt,
+        activeMs: 128000,
+        activeSince: null,
+        finishedAt: new Date().toISOString(),
+      },
+      result: {
+        functionalityVerified: true,
+        settled: true,
+        report: {
+          built: ['An appointment form', 'Booking confirmation messages'],
+          excluded: ['Online payments'],
+          approach: ['Keep the first version focused on taking bookings'],
+          checks: ['3 browser checks passed'],
+        },
+      },
+    },
+    entries,
+  );
+  await page.reload();
+  const report = page.getByRole('region', { name: 'Build summary' });
+  await expect(report).toContainText('Booking confirmation messages');
+  await expect(report).toContainText('Online payments');
+  await expect(report).toContainText('Keep the first version focused on taking bookings');
+  await expect(activity.locator('.build-elapsed')).toHaveText('Worked for 2m 08s');
+  await expect(activity).toContainText('Used 9 credits');
+  await expect(report).toHaveCSS('border-top-width', '0px');
+  await page.screenshot({ path: '.local/build-progress-dark.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(report).toBeVisible();
+  await expect(report).toHaveCSS('border-top-width', '0px');
+  await page.screenshot({ path: '.local/build-progress-light.png', animations: 'disabled' });
+});
 test('sending an idea queues one bounded build and opens the verified mini-browser beside the chat', async ({
   page,
 }) => {

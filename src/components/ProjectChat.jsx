@@ -1,5 +1,5 @@
 import { submitPromptOnEnter } from '../lib/promptKeyboard';
-import { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense, Fragment } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import {
   ArrowUp,
@@ -20,6 +20,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useData, ErrorState, Modal } from './Common';
 import VoiceInput from './VoiceInput';
 import PromptReferences, { ReferenceChips } from './PromptReferences';
+import BuildActivity from './BuildActivity';
 const ProjectTools = lazy(() => import('./ProjectTools'));
 const terminal = ['completed', 'failed', 'cancelled'];
 function storedReferences(id) {
@@ -162,6 +163,26 @@ export default function ProjectChat({ id }) {
     }, 8000);
     return () => clearInterval(timer);
   }, [active?.id]);
+  // Refresh a completed receipt briefly while measured billing finishes committing.
+  const unsettled =
+    data?.jobs
+      .filter((j) => terminal.includes(j.state) && j.result?.settled === false)
+      .slice(0, 3)
+      .map((j) => j.id)
+      .join(',') || '';
+  useEffect(() => {
+    if (!unsettled) return;
+    const timer = setInterval(() => {
+      reload();
+      refreshNavigation();
+      refresh().catch(() => {});
+    }, 2000);
+    const stop = setTimeout(() => clearInterval(timer), 30000);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(stop);
+    };
+  }, [unsettled]);
   useEffect(() => {
     if (!active || active.state === 'paused') return;
     const jobId = active.id;
@@ -413,11 +434,13 @@ export default function ProjectChat({ id }) {
             <p className="muted">Tell me what you want to ship. We’ll build it here.</p>
           )}
           {data.messages.map((message) => (
-            <div key={message.id} className={'chat-message ' + message.role}>
-              {message.role !== 'user' && <span>GOTCHA SAAS</span>}
-              <p>{message.content}</p>
+            <Fragment key={message.id}>
+              <div className={'chat-message ' + message.role}>
+                {message.role !== 'user' && <span>GOTCHA SAAS</span>}
+                <p>{message.content}</p>
+              </div>
               {message.jobId && message.role === 'user' && (
-                <JobActivity
+                <BuildActivity
                   job={data.jobs.find((j) => j.id === message.jobId)}
                   events={events[message.jobId] || []}
                   answers={questions.filter(
@@ -425,7 +448,7 @@ export default function ProjectChat({ id }) {
                   )}
                 />
               )}
-            </div>
+            </Fragment>
           ))}
           {busy && !active && (
             <div className="agent-working" role="status">
@@ -904,53 +927,5 @@ export default function ProjectChat({ id }) {
         </Suspense>
       </Modal>
     </main>
-  );
-}
-// Answers to the agent's questions stay with the build they belong to, inside its activity,
-// instead of being pinned to the end of the conversation as if the user had typed them.
-function JobActivity({ job, events, answers = [] }) {
-  if (!job) return null;
-  const running = !terminal.includes(job.state) && job.state !== 'paused';
-  const status =
-    job.state === 'failed'
-      ? 'Stopped before finishing'
-      : events.at(-1)?.message || job.stage || job.state;
-  return (
-    <div className="chat-job-activity">
-      <div className={running ? 'agent-working' : 'agent-status'} role="status">
-        {running ? <i /> : job.state === 'completed' ? <Check size={14} /> : null}
-        <span>{status}</span>
-      </div>
-      {job.state === 'completed' && (
-        <small className="chat-job-credits">
-          {job.chargedCredits
-            ? 'Used ' + job.chargedCredits + (job.chargedCredits === 1 ? ' credit' : ' credits')
-            : 'No credits used'}
-        </small>
-      )}
-      {(!!events.length || !!answers.length) && (
-        <details>
-          <summary>
-            Activity <ChevronDown size={12} />
-          </summary>
-          <ol>
-            {events.map((e) => (
-              <li key={e.id}>{e.message}</li>
-            ))}
-            {answers.map((q) => (
-              <li key={q.id}>
-                You answered “{q.title}”: {q.answer}
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
-      {job.state === 'failed' && (
-        <p role="alert">
-          {job.error ||
-            'I couldn’t finish this change, so your project is unchanged. Try again, or ask for a smaller first step.'}
-        </p>
-      )}
-    </div>
   );
 }
