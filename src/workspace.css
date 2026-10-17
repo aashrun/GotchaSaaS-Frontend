@@ -2545,162 +2545,200 @@ summary:focus-visible {
   width: 32px;
   height: 36px;
 }
+/* Inline work thread: commentary first, quiet evidence beneath it. */
 .chat-job-activity {
-  margin: 15px 0 0;
-  padding: 4px 2px 12px;
+  margin: 24px 0 0;
+  padding: 0 0 18px;
 }
-.build-run-header {
+.chat-job-activity .build-work-thread {
+  margin: 0;
+}
+.build-work-thread > summary.build-run-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18px;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0 0 15px;
+  list-style: none;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
 }
-.build-run-header .agent-working,
-.build-run-header .agent-status {
-  color: var(--text);
-  font-size: 13px;
+.build-work-thread > summary::-webkit-details-marker {
+  display: none;
+}
+.build-run-header > svg {
+  opacity: 0.55;
+  transition: transform 180ms ease;
+}
+.build-work-thread[open] > summary.build-run-header {
+  width: 100%;
+  margin-bottom: 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--muted) 16%, transparent);
+}
+.build-work-thread[open] .build-run-header > svg {
+  transform: rotate(180deg);
 }
 .build-elapsed {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.9;
   font-variant-numeric: tabular-nums;
+  font-weight: 400;
 }
-.build-current-detail {
-  margin: 5px 0 0 17px;
+.chat-job-activity .build-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 0;
+  display: grid;
+  gap: 26px;
+}
+.build-timeline > li {
+  min-width: 0;
+}
+.build-timeline .build-update {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.85;
+  font-weight: 400;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.build-action-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 14px;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.7;
 }
-.build-last-update {
-  display: block;
-  margin: 4px 0 0 17px;
+.build-action-row > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.build-earlier {
+  appearance: none;
+  padding: 0;
+  margin: 0 0 20px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
   color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.build-earlier:hover {
+  color: var(--text);
+}
+.build-work-thread .build-live-status {
+  margin-top: 24px;
+  font-size: 12px;
+}
+.build-last-update {
+  margin-left: auto;
+  padding-left: 12px;
   font-size: 10px;
-  opacity: 0.72;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.build-change-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: fit-content;
+  margin: 14px 0 20px;
+  padding: 9px 13px;
+  background: var(--surface);
+  border: 0;
+  border-radius: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.build-lines-added {
+  color: #70c69c;
+}
+.build-lines-removed {
+  color: #ed8d88;
+}
+[data-theme='light'] .build-lines-added {
+  color: #236c44;
+}
+[data-theme='light'] .build-lines-removed {
+  color: #ab3332;
 }
 .build-report {
-  margin: 16px 0;
-  padding: 22px;
-  border-radius: 20px;
-  background: var(--glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  margin: 20px 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 .build-report-heading {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
 }
 .build-report-heading strong {
   font-weight: 550;
 }
 .build-report-grid {
   display: grid;
-  gap: 20px;
+  gap: 18px;
   margin-top: 20px;
 }
 .build-report h3 {
-  margin: 0 0 7px;
-  font-size: 11px;
+  margin: 0 0 5px;
+  font-size: 12px;
   color: var(--muted);
   font-weight: 500;
+  letter-spacing: 0;
 }
 .build-report ul {
   margin: 0;
-  padding-left: 16px;
+  padding-left: 17px;
   color: var(--text);
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 13px;
+  line-height: 1.85;
 }
 .build-report p {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 13px;
+  line-height: 1.85;
 }
 .build-report-checks {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 15px;
-  margin-top: 22px;
+  margin-top: 20px;
 }
 .build-report-checks span {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   color: var(--muted);
-  font-size: 10px;
-}
-.chat-job-activity summary > span {
-  margin-left: 4px;
-  font-size: 10px;
-  opacity: 0.6;
-}
-.chat-job-activity summary > svg {
-  margin-left: auto;
-  transition: transform 180ms ease;
-}
-.chat-job-activity details[open] summary > svg {
-  transform: rotate(180deg);
-}
-.chat-job-activity .build-timeline {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 13px;
-}
-.build-timeline li {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  color: var(--muted);
   font-size: 11px;
-  line-height: 1.7;
-}
-.build-timeline-marker {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 15px;
-  height: 18px;
-  flex-shrink: 0;
-}
-.build-timeline-marker:empty::after {
-  content: '';
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0.5;
-}
-.build-timeline time {
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 10px;
-  opacity: 0.6;
-  font-variant-numeric: tabular-nums;
 }
 .build-failure {
-  font-size: 12px;
-  line-height: 1.8;
+  font-size: 13px;
+  line-height: 1.85;
   color: var(--muted);
-  margin: 12px 0 0;
+  margin: 14px 0 0;
 }
 @media (max-width: 600px) {
-  .build-run-header {
-    flex-direction: column;
-    gap: 6px;
+  .build-timeline .build-update {
+    font-size: 13px;
   }
-  .build-report {
-    padding: 18px;
+  .build-last-update {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .build-run-header > svg {
+    transition: none;
   }
 }
 .agent-working,
@@ -2743,7 +2781,7 @@ summary:focus-visible {
 .chat-job-credits {
   display: block;
   margin-top: 2px;
-  padding-left: 24px;
+  padding-left: 0;
   font-size: 11px;
   color: var(--muted);
 }

@@ -23,3 +23,13 @@ The runtime now validates argument JSON before executing a reply, provides expli
 - A real development-model/full-stack edit completed in five calls with specific app notes and structured finish fields. Build/browser checks and the resumed signup/CRUD bridge passed. It used an isolated local fixture account and the connected providers; the owner's failed job was not rerun or charged.
 
 Screenshot fixtures and raw traces stay in ignored `.local` directories. The example appointment-planner screenshots are test data, not a claim that the video-editor project completed.
+
+## Inline work thread
+
+The work thread follows the supplied conversation reference: a muted elapsed-time disclosure, readable progress paragraphs and quieter icon rows recording the actual actions underneath. Running threads start expanded; historical completed threads can be opened from their final duration. Longer feeds show the latest six paragraphs with a control to reveal earlier updates. Failed steps stay visible. New activity follows the bottom only while the reader is already near it.
+
+Customer notes may contain one to three sentences, up to 480 characters, about observable work and its purpose. This is public progress commentary, not private reasoning. Notes reuse the existing action calls, privacy validation, storage and event stream; no extra status-only model calls were added. Earlier notes remain readable.
+
+Completed runs persist server-measured net totals for files changed and lines added/removed, including new and deleted files. The customer response exposes only nonnegative integer counts after successful source application. Failed or historical runs without these totals do not receive invented counts. The clock now formats hours as well as minutes and seconds. The completion report is inline and borderless in both themes.
+
+This refinement passed 30 backend tests covering progress, privacy, diff totals and runtime completion, plus ten browser chat workflows covering grouped commentary/action rows, frozen clocks and hour formatting, keyboard disclosure, history expansion, both themes and phone overflow. The production frontend build passed. These UI fixtures do not spend customer provider credits.

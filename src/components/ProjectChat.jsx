@@ -97,6 +97,7 @@ export default function ProjectChat({ id }) {
     submitting = useRef(false),
     seenQuestions = useRef(new Set()),
     attempt = useRef(null),
+    followBuild = useRef(true),
     bottom = useRef(null),
     iframe = useRef(null),
     previewRevision = useRef(null),
@@ -213,6 +214,11 @@ export default function ProjectChat({ id }) {
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }, [data?.messages.length, active?.id]);
+  const liveUpdates = active ? events[active.id]?.length || 0 : 0;
+  useEffect(() => {
+    if (followBuild.current && liveUpdates)
+      bottom.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [liveUpdates]);
   useEffect(() => {
     if (!project || project.settings.validatedRevision !== project.revision) {
       setPreview(null);
@@ -429,7 +435,13 @@ export default function ProjectChat({ id }) {
         aria-label="Project chat"
         inert={previewOpen && chatHidden}
       >
-        <div className="project-conversation">
+        <div
+          className="project-conversation"
+          onScroll={(event) => {
+            const el = event.currentTarget;
+            followBuild.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+          }}
+        >
           {!data.messages.length && (
             <p className="muted">Tell me what you want to ship. We’ll build it here.</p>
           )}

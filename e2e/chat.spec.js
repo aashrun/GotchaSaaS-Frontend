@@ -161,7 +161,7 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
     },
   };
 }
-test('app-specific progress groups repeats, keeps accurate clocks and shows an honest completion report', async ({
+test('inline work feed groups repeats, keeps accurate clocks and shows an honest completion report', async ({
   page,
 }) => {
   await register(page);
@@ -179,7 +179,7 @@ test('app-specific progress groups repeats, keeps accurate clocks and shows an h
         action: 'read',
         phase: 'completed',
         subject: 'your booking form',
-        note: 'Checking how your booking form saves appointments',
+        note: 'I’m checking how your booking form saves appointments. The form and appointment list should agree before I change the flow.',
       },
     })),
     ...['failed', 'started', 'completed'].map((phase, i) => ({
@@ -193,7 +193,7 @@ test('app-specific progress groups repeats, keeps accurate clocks and shows an h
         action: 'change',
         phase,
         subject: 'your booking form',
-        note: 'Fixing how your booking form saves appointments',
+        note: 'I’m adding a clear booking confirmation. Once you save an appointment, the next step should be obvious—no guessing games.',
       },
     })),
   ];
@@ -205,14 +205,32 @@ test('app-specific progress groups repeats, keeps accurate clocks and shows an h
   await page.getByLabel('Describe your app idea').fill(fixture.idea);
   await page.getByRole('button', { name: 'Create project from idea' }).click();
   const activity = page.locator('.chat-job-activity');
-  await expect(activity).toContainText('Fixing how your booking form saves appointments');
+  await expect(activity).toContainText('I’m adding a clear booking confirmation.');
   await expect(activity.locator('.build-elapsed')).toContainText('Working');
   const initial = await activity.locator('.build-elapsed time').textContent();
   await expect.poll(() => activity.locator('.build-elapsed time').textContent()).not.toBe(initial);
-  await activity.locator('summary').click();
   await expect(activity.locator('.build-timeline li')).toHaveCount(3);
+  await expect(activity.locator('.build-timeline')).toBeVisible();
   await expect(activity.locator('.build-timeline li[data-phase="failed"]')).toHaveCount(1);
+  await expect(activity.locator('.build-action-row')).toContainText([
+    'Read app files',
+    'needs another pass',
+    'Edited app files',
+  ]);
   await expect(activity).not.toContainText('Preparing the next changes');
+  await activity.locator('summary').click();
+  await expect(activity.locator('.build-timeline')).not.toBeVisible();
+  await activity.locator('summary').press('Enter');
+  await expect(activity.locator('.build-timeline')).toBeVisible();
+  await activity.locator('.build-update').first().click();
+  await page.locator('.project-conversation').evaluate((el) => {
+    el.scrollTop = 0;
+  });
+  await page.screenshot({ path: '.local/work-feed-working-dark.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(activity.locator('.build-update').first()).toHaveCSS('color', 'rgb(19, 19, 22)');
+  await page.screenshot({ path: '.local/work-feed-working-light.png', animations: 'disabled' });
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
   fixture.setBuild(
     'paused',
     {
@@ -231,13 +249,14 @@ test('app-specific progress groups repeats, keeps accurate clocks and shows an h
       chargedCredits: 9,
       timing: {
         startedAt,
-        activeMs: 128000,
+        activeMs: 3728000,
         activeSince: null,
         finishedAt: new Date().toISOString(),
       },
       result: {
         functionalityVerified: true,
         settled: true,
+        changes: { files: 3, added: 47, removed: 12 },
         report: {
           built: ['An appointment form', 'Booking confirmation messages'],
           excluded: ['Online payments'],
@@ -253,7 +272,13 @@ test('app-specific progress groups repeats, keeps accurate clocks and shows an h
   await expect(report).toContainText('Booking confirmation messages');
   await expect(report).toContainText('Online payments');
   await expect(report).toContainText('Keep the first version focused on taking bookings');
-  await expect(activity.locator('.build-elapsed')).toHaveText('Worked for 2m 08s');
+  await expect(activity.locator('.build-elapsed')).toHaveText('Worked for 1h 02m 08s');
+  await page.waitForTimeout(1200);
+  await expect(activity.locator('.build-elapsed')).toHaveText('Worked for 1h 02m 08s');
+  const changes = page.getByLabel('Changes made');
+  await expect(changes).toContainText('3 files changed');
+  await expect(changes.getByLabel('47 lines added')).toBeVisible();
+  await expect(changes.getByLabel('12 lines removed')).toBeVisible();
   await expect(activity).toContainText('Used 9 credits');
   await expect(report).toHaveCSS('border-top-width', '0px');
   await page.screenshot({ path: '.local/build-progress-dark.png', animations: 'disabled' });
@@ -261,6 +286,38 @@ test('app-specific progress groups repeats, keeps accurate clocks and shows an h
   await expect(report).toBeVisible();
   await expect(report).toHaveCSS('border-top-width', '0px');
   await page.screenshot({ path: '.local/build-progress-light.png', animations: 'disabled' });
+});
+test('long activity stays readable, expands earlier updates and fits a phone', async ({ page }) => {
+  await register(page);
+  const fixture = await agentFixture(page, null);
+  const entries = Array.from({ length: 9 }, (_, i) => ({
+    id: randomUUID(),
+    sequence: i,
+    state: 'working',
+    message: `Reviewed booking step ${i + 1}.`,
+    progress: {
+      action: 'read',
+      phase: 'completed',
+      subject: 'your booking form',
+      note: `Checking booking step ${i + 1}. Keeping your appointment flow clear.`,
+    },
+  }));
+  fixture.setBuild('working', {}, entries);
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  const activity = page.locator('.chat-job-activity');
+  await expect(activity.locator('.build-timeline li')).toHaveCount(6);
+  await expect(activity).not.toContainText('Checking booking step 1.');
+  await activity.getByRole('button', { name: 'Show 3 earlier updates' }).click();
+  await expect(activity.locator('.build-timeline li')).toHaveCount(9);
+  await expect(activity).toContainText('Checking booking step 1.');
+  await activity.getByRole('button', { name: 'Show fewer updates' }).click();
+  await expect(activity.locator('.build-timeline li')).toHaveCount(6);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(activity.locator('.build-update').last()).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
+    true,
+  );
 });
 test('sending an idea queues one bounded build and opens the verified mini-browser beside the chat', async ({
   page,
