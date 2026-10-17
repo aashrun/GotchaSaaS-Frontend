@@ -69,7 +69,9 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
         data.messages.push({
           id: randomUUID(),
           role: 'assistant',
-          content: 'Built your appointment planner. Build and browser checks passed.',
+          content:
+            jobDetails.result?.summary ||
+            '**The booking flow is working.**\n\nHere is what you can try:\n\n- Save an appointment and look for its confirmation.\n- Online payments are not connected yet.',
           jobId,
         });
       }
@@ -218,6 +220,7 @@ test('inline work feed groups repeats, keeps accurate clocks and shows an honest
     'Edited app files',
   ]);
   await expect(activity).not.toContainText('Preparing the next changes');
+  await expect(activity.locator('.build-update').first()).toHaveCSS('font-size', '16px');
   await activity.locator('summary').click();
   await expect(activity.locator('.build-timeline')).not.toBeVisible();
   await activity.locator('summary').press('Enter');
@@ -279,13 +282,154 @@ test('inline work feed groups repeats, keeps accurate clocks and shows an honest
   await expect(changes).toContainText('3 files changed');
   await expect(changes.getByLabel('47 lines added')).toBeVisible();
   await expect(changes.getByLabel('12 lines removed')).toBeVisible();
-  await expect(activity).toContainText('Used 9 credits');
+  await expect(report).toContainText('Used 9 credits');
+  await expect(page.locator('.assistant-response strong')).toContainText(
+    'The booking flow is working.',
+  );
+  await expect(page.locator('.assistant-response li')).toHaveCount(2);
   await expect(report).toHaveCSS('border-top-width', '0px');
   await page.screenshot({ path: '.local/build-progress-dark.png', animations: 'disabled' });
   await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await expect(report).toBeVisible();
   await expect(report).toHaveCSS('border-top-width', '0px');
   await page.screenshot({ path: '.local/build-progress-light.png', animations: 'disabled' });
+});
+test('unannotated tool events stay with real commentary and completed work collapses automatically', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(page, null);
+  const entries = [
+    {
+      id: randomUUID(),
+      sequence: 0,
+      state: 'working',
+      message: 'Starting the booking update.',
+      progress: {
+        action: 'read',
+        phase: 'completed',
+        subject: 'your booking form',
+        note: 'I’m rebuilding your booking form around a clear confirmation. The appointment list should show exactly what was saved.',
+      },
+    },
+    ...Array.from({ length: 18 }, (_, i) => ({
+      id: randomUUID(),
+      sequence: i + 1,
+      state: 'working',
+      message: i % 2 ? 'Changes to your app are saved for checking.' : 'Reviewed your app.',
+      progress: { action: i % 2 ? 'change' : 'read', phase: 'completed', subject: 'your app' },
+    })),
+  ];
+  fixture.setBuild('working', {}, entries);
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  const activity = page.locator('.chat-job-activity');
+  await expect(activity.locator('.build-update')).toHaveCount(1);
+  await expect(activity).not.toContainText('Reviewed your app');
+  await expect(activity).not.toContainText('saved for checking');
+  await expect(activity.locator('.build-action-row')).toHaveCount(1);
+  await expect(activity.locator('.build-timeline')).toBeVisible();
+  fixture.setBuild(
+    'completed',
+    { result: { functionalityVerified: true, settled: true } },
+    entries,
+  );
+  await expect(activity.locator('.build-timeline')).not.toBeVisible({ timeout: 12000 });
+  await expect(page.locator('.assistant-response')).toContainText(
+    'Online payments are not connected yet.',
+  );
+  await expect(page.locator('.recent-projects svg')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Recents', exact: true })).toHaveCSS(
+    'font-size',
+    '15px',
+  );
+  expect((await page.locator('.sidebar').boundingBox()).width).toBe(248);
+});
+test('formatted assistant replies cannot execute HTML, load images or link to active scripts', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(page, null);
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.locator('.chat-job-activity')).toBeVisible();
+  fixture.setBuild(
+    'completed',
+    {
+      result: {
+        settled: true,
+        summary:
+          '**Your answer**\n\n- A clear next step\n\n[Unsafe action](javascript:alert(1))\n\n![Do not load](https://example.invalid/untrusted-image.png)\n\n<script>alert(1)</script><img src="https://example.invalid/untrusted-image.png" onerror="alert(1)">',
+      },
+    },
+    [],
+  );
+  await page.reload();
+  const response = page.locator('.assistant-response');
+  await expect(response.locator('strong')).toHaveText('Your answer');
+  await expect(response.locator('li')).toHaveText('A clear next step');
+  await expect(response.locator('img, script')).toHaveCount(0);
+  expect((await response.getByText('Unsafe action').getAttribute('href')) || '').not.toContain(
+    'javascript:',
+  );
+});
+
+test('slow project creation and chat submission show the prompt immediately without waiting for refreshes', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(page);
+  let openProject;
+  const projectGate = new Promise((resolve) => {
+    openProject = resolve;
+  });
+  await page.route('**/v1/projects', async (route) => {
+    if (route.request().method() !== 'POST') return route.continue();
+    await projectGate;
+    const response = await route.fetch();
+    await route.fulfill({ response });
+  });
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.getByRole('main', { name: 'Starting your project' })).toBeVisible({
+    timeout: 1000,
+  });
+  await expect(page.locator('.chat-message.user')).toHaveText(fixture.idea);
+  openProject();
+  await expect(page.locator('.assistant-response')).toBeVisible();
+  let finishEstimate;
+  const estimateGate = new Promise((resolve) => {
+    finishEstimate = resolve;
+  });
+  let messageWrites = 0;
+  await page.route('**/v1/projects/*/messages', (route) => {
+    messageWrites++;
+    return route.abort();
+  });
+  await page.route('**/v1/ai/estimate', async (route) => {
+    await estimateGate;
+    await route.fulfill({
+      status: 503,
+      json: { error: { message: 'Please retry this request.' } },
+    });
+  });
+  const prompt = 'Make the appointment buttons larger and clearer';
+  await page.getByLabel('Ask Gotcha to build or edit your app').fill(prompt);
+  await page.getByRole('button', { name: 'Send prompt' }).click();
+  await expect(page.locator('.chat-message.user').last()).toHaveText(prompt, { timeout: 1000 });
+  await expect(page.getByLabel('Ask Gotcha to build or edit your app')).toHaveValue('');
+  await expect(
+    page.getByRole('button', { name: 'Send prompt' }).locator('.lucide-loader-circle'),
+  ).toHaveCount(0);
+  expect(messageWrites).toBe(0);
+  finishEstimate();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Please retry this request.' }),
+  ).toBeVisible();
+  await expect(page.locator('.chat-message.user').last()).toHaveText(prompt);
+  await page.reload();
+  await expect(page.locator('.chat-message.user').last()).toHaveText(prompt);
+  await expect(page.getByRole('button', { name: 'Retry this build' })).toBeVisible();
 });
 test('long activity stays readable, expands earlier updates and fits a phone', async ({ page }) => {
   await register(page);
@@ -338,7 +482,7 @@ test('sending an idea queues one bounded build and opens the verified mini-brows
   await expect(frame.getByRole('button', { name: 'Saved' })).toBeVisible();
   await expect(page.locator('iframe')).toHaveAttribute('sandbox', 'allow-scripts allow-forms');
   await expect(page.locator('.chat-message.assistant')).toContainText(
-    'Build and browser checks passed.',
+    'The booking flow is working.',
   );
   expect(fixture.stats()).toEqual({ estimates: 1, submissions: 1, answered: false });
   await expect(page.locator('.chat-routing-label')).toHaveCount(0);
@@ -504,7 +648,7 @@ test('chat uses compact unlabelled user bubbles, neutral gray themes and translu
       'color',
       theme === 'dark' ? 'rgb(245, 245, 245)' : 'rgb(19, 19, 22)',
     );
-    await expect(page.locator('.chat-message.assistant > p').first()).toHaveCSS(
+    await expect(page.locator('.chat-message.assistant .assistant-response p').first()).toHaveCSS(
       'color',
       theme === 'dark' ? 'rgb(245, 245, 245)' : 'rgb(19, 19, 22)',
     );

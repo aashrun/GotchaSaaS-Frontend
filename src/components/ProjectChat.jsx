@@ -21,6 +21,8 @@ import { useData, ErrorState, Modal } from './Common';
 import VoiceInput from './VoiceInput';
 import PromptReferences, { ReferenceChips } from './PromptReferences';
 import BuildActivity from './BuildActivity';
+import OpeningProject from './OpeningProject';
+import AssistantMessage from './AssistantMessage';
 const ProjectTools = lazy(() => import('./ProjectTools'));
 const terminal = ['completed', 'failed', 'cancelled'];
 function storedReferences(id) {
@@ -30,11 +32,19 @@ function storedReferences(id) {
     return [];
   }
 }
+function storedAttempt(id) {
+  try {
+    const value = JSON.parse(sessionStorage.getItem('gotcha-pending-request:' + id));
+    return typeof value?.id === 'string' && typeof value?.prompt === 'string' ? value : null;
+  } catch {
+    return null;
+  }
+}
 export default function ProjectChat({ id }) {
   const { user, refresh } = useAuth();
   const { refreshNavigation } = useOutletContext();
   const [params, setParams] = useSearchParams();
-  const { data, error, reload } = useData('/projects/' + id);
+  const { data, error, reload, setData } = useData('/projects/' + id);
   const { data: configuration } = useData('/config');
   const [draft, setDraft] = useState(''),
     [busy, setBusy] = useState(false),
@@ -45,6 +55,16 @@ export default function ProjectChat({ id }) {
     );
   const [pendingPrompt, setPendingPrompt] = useState(
     () => sessionStorage.getItem('gotcha-studio-prompt:' + id) || '',
+  );
+  const [optimistic, setOptimistic] = useState(() =>
+    pendingPrompt
+      ? {
+          id: storedAttempt(id)?.id || crypto.randomUUID(),
+          role: 'user',
+          content: pendingPrompt,
+          restored: true,
+        }
+      : null,
   );
   const [references, setReferences] = useState(() => storedReferences(id));
   const [referenceBusy, setReferenceBusy] = useState(false),
@@ -96,7 +116,7 @@ export default function ProjectChat({ id }) {
   const started = useRef(false),
     submitting = useRef(false),
     seenQuestions = useRef(new Set()),
-    attempt = useRef(null),
+    attempt = useRef(storedAttempt(id)),
     followBuild = useRef(true),
     bottom = useRef(null),
     iframe = useRef(null),
@@ -139,6 +159,7 @@ export default function ProjectChat({ id }) {
       (m) => m.role === 'user' && m.jobId && m.content === pendingPrompt,
     );
     if (
+      !attempt.current &&
       submitted &&
       data.jobs.some(
         (j) => j.id === submitted.jobId && (j.state === 'completed' || !terminal.includes(j.state)),
@@ -291,6 +312,19 @@ export default function ProjectChat({ id }) {
     if (submitting.current || active || !canEdit || voiceBusy || referenceBusy || prompt.length < 5)
       return;
     submitting.current = true;
+    if (!attempt.current || attempt.current.prompt !== prompt)
+      attempt.current = { id: crypto.randomUUID(), prompt };
+    sessionStorage.setItem('gotcha-pending-request:' + id, JSON.stringify(attempt.current));
+    const priorMessage = data.messages.find(
+      (m) => m.role === 'user' && !m.jobId && m.content === prompt,
+    );
+    const submittedMessage = {
+      id: priorMessage?.id || attempt.current.id,
+      role: 'user',
+      content: prompt,
+    };
+    setOptimistic(submittedMessage);
+    setDraft('');
     setBusy(true);
     setNotice('');
     setPendingPrompt(prompt);
@@ -314,16 +348,17 @@ export default function ProjectChat({ id }) {
         setNotice('A quick setup question before we build. Your idea is saved here.');
         return;
       }
-      if (!data.messages.some((m) => m.role === 'user' && !m.jobId && m.content === prompt)) {
-        if (!attempt.current || attempt.current.prompt !== prompt)
-          attempt.current = { id: crypto.randomUUID(), prompt };
-        await api.post('/projects/' + id + '/messages', {
-          id: attempt.current.id,
-          content: prompt,
-        });
-        await reload();
-      }
       if (!user.emailVerified) {
+        if (!priorMessage) {
+          const saved = await api.post('/projects/' + id + '/messages', {
+            id: attempt.current.id,
+            content: prompt,
+          });
+          setData((current) => ({
+            ...current,
+            messages: [...current.messages, saved.data.message],
+          }));
+        }
         setNotice('Verify your email to start this build. Your idea is saved here.');
         return;
       }
@@ -335,7 +370,7 @@ export default function ProjectChat({ id }) {
       });
       if (!attempt.current || attempt.current.prompt !== prompt)
         attempt.current = { id: crypto.randomUUID(), prompt };
-      await api.post('/ai/jobs', {
+      const { data: accepted } = await api.post('/ai/jobs', {
         projectId: id,
         engine: 'agent-v1',
         prompt,
@@ -344,13 +379,22 @@ export default function ProjectChat({ id }) {
         maxCredits: estimate.max,
         ...(estimate.routingTicket ? { routingTicket: estimate.routingTicket } : {}),
       });
-      setDraft('');
+      const queuedMessage = { ...submittedMessage, jobId: accepted.job.id };
+      setOptimistic(queuedMessage);
+      setData((current) => ({
+        ...current,
+        messages: priorMessage
+          ? current.messages.map((m) => (m.id === priorMessage.id ? queuedMessage : m))
+          : [...current.messages, queuedMessage],
+        jobs: [accepted.job, ...current.jobs.filter((j) => j.id !== accepted.job.id)],
+      }));
       setPendingPrompt('');
       setReferences([]);
       sessionStorage.removeItem('gotcha-studio-prompt:' + id);
+      sessionStorage.removeItem('gotcha-pending-request:' + id);
       attempt.current = null;
-      await reload();
-      await refreshNavigation();
+      reload();
+      refreshNavigation().catch(() => {});
     } catch (e) {
       setNotice(e.message);
     } finally {
@@ -389,10 +433,18 @@ export default function ProjectChat({ id }) {
     return error ? (
       <ErrorState message={error} retry={reload} />
     ) : (
-      <p className="chat-loading" role="status">
-        Opening your chat…
-      </p>
+      <OpeningProject prompt={pendingPrompt} message="Opening your chat…" title="Your project" />
     );
+  const messages =
+    optimistic &&
+    !data.messages.some(
+      (m) =>
+        m.id === optimistic.id ||
+        (optimistic.restored && m.role === 'user' && m.content === optimistic.content) ||
+        (optimistic.jobId && m.jobId === optimistic.jobId && m.role === 'user'),
+    )
+      ? [...data.messages, optimistic]
+      : data.messages;
   return (
     <main
       ref={split}
@@ -445,12 +497,18 @@ export default function ProjectChat({ id }) {
           {!data.messages.length && (
             <p className="muted">Tell me what you want to ship. We’ll build it here.</p>
           )}
-          {data.messages.map((message) => (
+          {messages.map((message) => (
             <Fragment key={message.id}>
-              <div className={'chat-message ' + message.role}>
-                {message.role !== 'user' && <span>GOTCHA SAAS</span>}
-                <p>{message.content}</p>
-              </div>
+              {message.role === 'assistant' ? (
+                <AssistantMessage
+                  content={message.content}
+                  job={data.jobs.find((j) => j.id === message.jobId)}
+                />
+              ) : (
+                <div className={'chat-message ' + message.role}>
+                  <p>{message.content}</p>
+                </div>
+              )}
               {message.jobId && message.role === 'user' && (
                 <BuildActivity
                   job={data.jobs.find((j) => j.id === message.jobId)}
@@ -465,7 +523,7 @@ export default function ProjectChat({ id }) {
           {busy && !active && (
             <div className="agent-working" role="status">
               <i />
-              Preparing your build…
+              Sending your request…
             </div>
           )}
           {(notice || (pendingPrompt && !active && !busy)) && (
@@ -626,7 +684,7 @@ export default function ProjectChat({ id }) {
                       busy || voiceBusy || referenceBusy || !canEdit || draft.trim().length < 5
                     }
                   >
-                    {busy ? <Loader2 size={17} /> : <ArrowUp size={18} />}
+                    <ArrowUp size={18} />
                   </button>
                 )}
               </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import OpeningProject from '../components/OpeningProject';
 import { Link, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import {
   ArrowUp,
@@ -45,6 +46,7 @@ function ProjectHome({ library }) {
   const [page, setPage] = useState(1);
   const [archived, setArchived] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [launchPrompt, setLaunchPrompt] = useState('');
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [menu, setMenu] = useState(null);
   const [rename, setRename] = useState(null);
@@ -95,6 +97,7 @@ function ProjectHome({ library }) {
     if (voiceBusy || referenceBusy || creating.current || (!empty && prompt.trim().length < 5))
       return;
     creating.current = true;
+    setLaunchPrompt(empty ? '' : prompt.trim());
     setBusy(true);
     try {
       const intent = empty ? '' : prompt.trim();
@@ -120,8 +123,8 @@ function ProjectHome({ library }) {
       if (intent) sessionStorage.setItem('gotcha-studio-prompt:' + data.project.id, intent);
       if (references.length && !empty)
         sessionStorage.setItem('gotcha-references:' + data.project.id, JSON.stringify(references));
-      await refreshNavigation();
       navigate('/projects?chat=' + data.project.id + (intent ? '&build=true' : ''));
+      refreshNavigation().catch(() => {});
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -140,6 +143,7 @@ function ProjectHome({ library }) {
       toast.error(error.message);
     }
   }
+  if (busy) return <OpeningProject prompt={launchPrompt} />;
   return (
     <main className={'project-library page-content' + (library ? ' project-library-only' : '')}>
       {!library && (

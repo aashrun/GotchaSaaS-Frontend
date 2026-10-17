@@ -34,6 +34,10 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   page,
 }) => {
   let requests = 0;
+  let releaseTranscript;
+  const transcriptGate = new Promise((resolve) => {
+    releaseTranscript = resolve;
+  });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/auth/register');
@@ -49,6 +53,7 @@ test('voice waveform cancels without uploading and inserts dictation in home and
     const bytes = route.request().postDataBuffer();
     expect(bytes.toString('ascii', 0, 4)).toBe('RIFF');
     expect(bytes.readUInt32LE(24)).toBe(16000);
+    if (requests === 1) await transcriptGate;
     await route.fulfill({
       json: {
         text: 'Build a customer dashboard',
@@ -69,7 +74,12 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   await page.waitForTimeout(800);
   await page.screenshot({ path: '.local/voice-recording.png' });
   await page.getByRole('button', { name: 'Finish voice recording' }).click();
+  await expect(page.getByRole('button', { name: 'Adding voice input' })).toBeVisible();
+  await expect(page.getByText('Transcribing…', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.voice-recording .voice-spinner')).toHaveCount(0);
+  releaseTranscript();
   await expect(composer).toHaveValue('Existing idea\nBuild a customer dashboard');
+  await expect(page.getByText('Dictation added', { exact: true })).toHaveCount(0);
   expect(requests).toBe(1);
   await page.getByRole('button', { name: 'Create project from idea' }).click();
   await expect(page).toHaveURL(/\/projects\?chat=/);

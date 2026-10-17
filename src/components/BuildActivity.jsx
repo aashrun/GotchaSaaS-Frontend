@@ -57,10 +57,14 @@ export function activityBlocks(activity) {
   const blocks = [];
   for (const event of activity) {
     const failed = event.progress?.phase === 'failed' || event.state === 'failed';
-    const text = (failed ? event.message : event.progress?.note || event.message).trim();
+    const p = event.progress;
+    if (!p && !failed && !/^Question:/.test(event.message)) continue;
+    const text = failed || !p ? event.message : p.note?.trim() || null;
     const previous = blocks.at(-1);
-    // One commentary paragraph can cover several real actions. A failure always stays visible.
-    if (!failed && previous?.text === text && !previous.failed) previous.events.push(event);
+    // Incidental reads/edits belong to the current update, never their own generic paragraphs.
+    if (!failed && previous && !previous.failed && (!text || previous.text === text))
+      previous.events.push(event);
+    else if (!text && !failed && !p) continue;
     else blocks.push({ id: event.id, text, events: [event], failed });
   }
   return blocks;
@@ -69,7 +73,7 @@ function ActionRow({ events }) {
   const unique = new Map();
   for (const event of events) {
     const p = event.progress;
-    if (p && actions[p.action]) unique.set(`${p.action}:${p.phase}`, p);
+    if (p && actions[p.action]) unique.set(p.action, p);
   }
   if (!unique.size) return null;
   const steps = [...unique.values()];
@@ -121,7 +125,7 @@ function RunClock({ job }) {
     </span>
   );
 }
-function CompletionReport({ job }) {
+export function CompletionReport({ job }) {
   const report = job.result?.report;
   if (!report) return null;
   const sections = [
@@ -133,7 +137,7 @@ function CompletionReport({ job }) {
     <section className="build-report" aria-label="Build summary">
       <div className="build-report-heading">
         <Check size={15} />
-        <strong>Here’s what landed.</strong>
+        <strong>{job.result?.changes?.files === 0 ? 'What I found' : 'What changed'}</strong>
       </div>
       <div className="build-report-grid">
         {sections.map(([title, items, fallback]) => (
@@ -161,12 +165,46 @@ function CompletionReport({ job }) {
           ))}
         </div>
       )}
+      <ChangeSummary job={job} />
+      <CreditReceipt job={job} />
     </section>
+  );
+}
+function ChangeSummary({ job }) {
+  const changes = job.result?.changes;
+  if (!changes) return null;
+  return (
+    <div className="build-change-summary" aria-label="Changes made">
+      <FilePenLine size={14} aria-hidden="true" />
+      <span>
+        {changes.files} {changes.files === 1 ? 'file' : 'files'} changed
+      </span>
+      <span className="build-lines-added" aria-label={`${changes.added} lines added`}>
+        +{changes.added}
+      </span>
+      <span className="build-lines-removed" aria-label={`${changes.removed} lines removed`}>
+        −{changes.removed}
+      </span>
+    </div>
+  );
+}
+function CreditReceipt({ job }) {
+  return (
+    <small className="chat-job-credits">
+      {job.result?.settled === false
+        ? 'Finalizing credit usage…'
+        : job.chargedCredits
+          ? `Used ${job.chargedCredits} ${job.chargedCredits === 1 ? 'credit' : 'credits'}`
+          : 'No credits used'}
+    </small>
   );
 }
 export default function BuildActivity({ job, events, answers = [] }) {
   const [expanded, setExpanded] = useState(() => !terminal.includes(job?.state));
   const [showEarlier, setShowEarlier] = useState(false);
+  useEffect(() => {
+    if (terminal.includes(job?.state)) setExpanded(false);
+  }, [job?.id, job?.state]);
   if (!job) return null;
   const running = !terminal.includes(job.state) && job.state !== 'paused';
   const activity = compactActivity(events);
@@ -212,7 +250,7 @@ export default function BuildActivity({ job, events, answers = [] }) {
               key={block.id}
               data-phase={block.failed ? 'failed' : block.events.at(-1).progress?.phase}
             >
-              <p className="build-update">{block.text}</p>
+              {block.text && <p className="build-update">{block.text}</p>}
               <ActionRow events={block.events} />
             </li>
           ))}
@@ -241,42 +279,13 @@ export default function BuildActivity({ job, events, answers = [] }) {
           )}
         </div>
       </details>
-      {job.state === 'completed' && job.result?.changes && (
-        <div className="build-change-summary" aria-label="Changes made">
-          <FilePenLine size={14} aria-hidden="true" />
-          <span>
-            {job.result.changes.files} {job.result.changes.files === 1 ? 'file' : 'files'} changed
-          </span>
-          <span
-            className="build-lines-added"
-            aria-label={`${job.result.changes.added} lines added`}
-          >
-            +{job.result.changes.added}
-          </span>
-          <span
-            className="build-lines-removed"
-            aria-label={`${job.result.changes.removed} lines removed`}
-          >
-            −{job.result.changes.removed}
-          </span>
-        </div>
-      )}
-      {job.state === 'completed' && <CompletionReport job={job} />}
       {job.state === 'failed' && (
         <p className="build-failure" role="alert">
           {job.error ||
             'I couldn’t finish this change. Your existing app is unchanged; try a smaller first step.'}
         </p>
       )}
-      {terminal.includes(job.state) && (
-        <small className="chat-job-credits">
-          {job.result?.settled === false
-            ? 'Finalizing credit usage…'
-            : job.chargedCredits
-              ? `Used ${job.chargedCredits} ${job.chargedCredits === 1 ? 'credit' : 'credits'}`
-              : 'No credits used'}
-        </small>
-      )}
+      {terminal.includes(job.state) && !job.result?.report && <CreditReceipt job={job} />}
     </div>
   );
 }

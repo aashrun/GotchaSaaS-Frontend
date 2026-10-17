@@ -193,7 +193,7 @@ summary:focus-visible {
 .new-project-button {
   width: 100%;
   padding: 12px 14px;
-  font-size: 12px;
+  font-size: 15px;
   border-radius: 9px;
 }
 .nav-caption {
@@ -211,7 +211,7 @@ summary:focus-visible {
 }
 .sidebar nav a {
   padding: 11px 12px;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--muted);
   gap: 11px;
   border-radius: 8px;
@@ -895,7 +895,7 @@ summary:focus-visible {
   min-width: 0;
 }
 .recent-projects a {
-  font-size: 11px !important;
+  font-size: 14px !important;
   padding-top: 8px !important;
   padding-bottom: 8px !important;
 }
@@ -1289,7 +1289,7 @@ summary:focus-visible {
   color: var(--muted);
   padding: 10px 12px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 15px;
   text-align: left;
 }
 .sidebar-section-toggle:hover {
@@ -1319,7 +1319,7 @@ summary:focus-visible {
   margin-top: 4px;
 }
 .sidebar .manage-navigation a {
-  font-size: 11px;
+  font-size: 14px;
   padding: 10px 12px;
 }
 .sidebar-recents .nav-caption {
@@ -2481,7 +2481,7 @@ summary:focus-visible {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.75;
-  font-size: 14px;
+  font-size: 16px;
 }
 .conversation .chat-message p {
   color: var(--text);
@@ -2597,7 +2597,7 @@ summary:focus-visible {
 .build-timeline .build-update {
   margin: 0;
   color: var(--text);
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.85;
   font-weight: 400;
   white-space: pre-wrap;
@@ -2609,7 +2609,7 @@ summary:focus-visible {
   gap: 9px;
   margin-top: 14px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
 }
 .build-action-row > svg {
@@ -2691,7 +2691,7 @@ summary:focus-visible {
 }
 .build-report h3 {
   margin: 0 0 5px;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--muted);
   font-weight: 500;
   letter-spacing: 0;
@@ -2700,13 +2700,13 @@ summary:focus-visible {
   margin: 0;
   padding-left: 17px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.85;
 }
 .build-report p {
   margin: 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.85;
 }
 .build-report-checks {
@@ -2730,11 +2730,92 @@ summary:focus-visible {
 }
 @media (max-width: 600px) {
   .build-timeline .build-update {
-    font-size: 13px;
+    font-size: 15px;
   }
   .build-last-update {
     display: none;
   }
+}
+.project-launch {
+  position: absolute !important;
+  inset: 0;
+  min-height: 100%;
+  background: var(--chat-bg);
+  border-radius: inherit;
+}
+.assistant-response {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.assistant-response > :first-child {
+  margin-top: 12px;
+}
+.assistant-response > :last-child {
+  margin-bottom: 0;
+}
+.assistant-response p {
+  white-space: normal !important;
+  margin: 0 0 16px;
+}
+.assistant-response :is(h1, h2, h3, h4) {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.65;
+  letter-spacing: 0;
+  margin: 22px 0 10px;
+}
+.assistant-response :is(ul, ol) {
+  padding-left: 23px;
+  margin: 12px 0 20px;
+}
+.assistant-response ul,
+.build-report ul {
+  list-style: disc;
+}
+.assistant-response ol {
+  list-style: decimal;
+}
+.assistant-response li {
+  padding-left: 3px;
+  margin: 7px 0;
+}
+.assistant-response li > p {
+  margin: 0;
+}
+.assistant-response a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.assistant-response :is(pre, blockquote) {
+  background: var(--glass);
+  border: 0;
+  border-radius: 12px;
+  margin: 16px 0;
+  padding: 14px 18px;
+  overflow: auto;
+  font-size: 13px;
+}
+.voice-pending {
+  position: relative;
+}
+.voice-pending > i {
+  position: absolute;
+  right: 3px;
+  bottom: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--text);
+  animation: agent-pulse 1.8s ease-in-out infinite;
+}
+.sidebar-search-button {
+  font-size: 15px;
+}
+.sidebar-user strong {
+  font-size: 14px;
 }
 @media (prefers-reduced-motion: reduce) {
   .build-run-header > svg {

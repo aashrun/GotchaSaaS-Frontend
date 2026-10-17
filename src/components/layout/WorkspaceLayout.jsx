@@ -245,7 +245,6 @@ export default function WorkspaceLayout() {
                     to={'/projects?chat=' + project.id}
                     onClick={() => setOpen(false)}
                   >
-                    <MessageSquare size={15} />
                     <span>{project.name}</span>
                   </Link>
                 ))}

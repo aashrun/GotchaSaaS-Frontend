@@ -85,7 +85,7 @@ export function useData(url) {
       live = false;
     };
   }, [url]);
-  return { data, error, loading, reload };
+  return { data, error, loading, reload, setData };
 }
 export function ErrorState({ message, retry }) {
   return (

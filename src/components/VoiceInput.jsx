@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Mic, X, Check, Loader2 } from 'lucide-react';
+import { Mic, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 export function encodeWav(chunks, rate) {
@@ -44,6 +44,7 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
     [bars, setBars] = useState(Array(18).fill(3));
   const recording = useRef(null),
     mounted = useRef(true),
+    request = useRef(null),
     pending = useRef(false),
     callback = useRef({ onTranscript, onBusy });
   callback.current = { onTranscript, onBusy };
@@ -64,6 +65,7 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
     return () => {
       mounted.current = false;
       pending.current = false;
+      request.current?.abort();
       release();
       callback.current.onBusy?.(false);
     };
@@ -79,20 +81,23 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
     }
     setState('transcribing');
     try {
+      const controller = new AbortController();
+      request.current = controller;
       const audio = encodeWav(r.chunks, r.context.sampleRate);
       const { data } = await api.post('/voice/transcribe', audio, {
         headers: { 'Content-Type': 'audio/wav', 'x-recording-id': crypto.randomUUID() },
         timeout: 60000,
+        signal: controller.signal,
       });
       if (mounted.current) {
         callback.current.onTranscript(data.text);
-        toast.success('Dictation added');
       }
     } catch (e) {
-      if (mounted.current) toast.error(e.message);
+      if (mounted.current && e.code !== 'ERR_CANCELED') toast.error(e.message);
     } finally {
       if (mounted.current) {
         setState('idle');
+        request.current = null;
         callback.current.onBusy?.(false);
       }
     }
@@ -181,10 +186,15 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
     );
   if (state === 'starting' || state === 'transcribing')
     return (
-      <span className="voice-recording" role="status">
-        <Loader2 size={16} className="voice-spinner" />
-        {state === 'starting' ? 'Connecting mic…' : 'Transcribing…'}
-      </span>
+      <button
+        type="button"
+        className="voice-mic voice-pending icon-button"
+        disabled
+        aria-label={state === 'starting' ? 'Connecting microphone' : 'Adding voice input'}
+      >
+        <Mic size={17} />
+        <i aria-hidden="true" />
+      </button>
     );
   return (
     <div className="voice-recording" role="group" aria-label="Voice recording">
