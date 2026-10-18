@@ -240,9 +240,15 @@ export default function WorkspaceLayout() {
                   <p className="sidebar-empty">Your next project starts here.</p>
                 )}
                 {projectData?.projects.slice(0, 5).map((project) => (
-                  <NavLink
+                  <Link
                     key={project.id}
                     to={'/projects?chat=' + project.id}
+                    aria-current={
+                      location.pathname === '/projects' &&
+                      new URLSearchParams(location.search).get('chat') === project.id
+                        ? 'page'
+                        : undefined
+                    }
                     className={
                       location.pathname === '/projects' &&
                       new URLSearchParams(location.search).get('chat') === project.id
@@ -252,7 +258,7 @@ export default function WorkspaceLayout() {
                     onClick={() => setOpen(false)}
                   >
                     <span>{project.name}</span>
-                  </NavLink>
+                  </Link>
                 ))}
               </nav>
             )}
