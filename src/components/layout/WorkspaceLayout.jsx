@@ -240,13 +240,19 @@ export default function WorkspaceLayout() {
                   <p className="sidebar-empty">Your next project starts here.</p>
                 )}
                 {projectData?.projects.slice(0, 5).map((project) => (
-                  <Link
+                  <NavLink
                     key={project.id}
                     to={'/projects?chat=' + project.id}
+                    className={
+                      location.pathname === '/projects' &&
+                      new URLSearchParams(location.search).get('chat') === project.id
+                        ? 'active'
+                        : ''
+                    }
                     onClick={() => setOpen(false)}
                   >
                     <span>{project.name}</span>
-                  </Link>
+                  </NavLink>
                 ))}
               </nav>
             )}

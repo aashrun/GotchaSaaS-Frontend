@@ -520,12 +520,6 @@ export default function ProjectChat({ id }) {
               )}
             </Fragment>
           ))}
-          {busy && !active && (
-            <div className="agent-working" role="status">
-              <i />
-              Sending your request…
-            </div>
-          )}
           {(notice || (pendingPrompt && !active && !busy)) && (
             <div className="chat-notice" role="status">
               <p>{notice || 'Your idea is saved here. Retry the build when you’re ready.'}</p>
