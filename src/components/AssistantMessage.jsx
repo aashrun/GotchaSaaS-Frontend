@@ -25,7 +25,6 @@ const Answer = memo(function Answer({ content }) {
 export default function AssistantMessage({ content, job }) {
   return (
     <div className="chat-message assistant">
-      <span>GOTCHA SAAS</span>
       <Answer content={content} />
       {job?.state === 'completed' && <CompletionReport job={job} />}
     </div>
