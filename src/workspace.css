@@ -1726,7 +1726,7 @@ summary:focus-visible {
 
 /* A compact prompt with attachments on the left and voice/send together. */
 .project-composer {
-  max-width: 720px;
+  max-width: 736px;
   border-radius: 28px;
   padding: 18px 18px 12px;
 }
@@ -1737,6 +1737,7 @@ summary:focus-visible {
   padding: 0 4px 10px;
   resize: none;
   line-height: 1.5;
+  font-size: 16px;
 }
 .project-composer-actions {
   justify-content: flex-start;
@@ -2401,6 +2402,7 @@ summary:focus-visible {
   overflow: hidden;
 }
 .project-chat {
+  --chat-reading-width: 736px;
   height: 100%;
   min-height: 0;
   display: grid;
@@ -2440,7 +2442,8 @@ summary:focus-visible {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 34px max(24px, calc((100% - 640px) / 2)) 24px;
+  padding: 34px max(24px, calc((100% - var(--chat-reading-width)) / 2)) 80px;
+  scroll-padding-bottom: 80px;
   scrollbar-width: none;
 }
 .project-conversation::-webkit-scrollbar {
@@ -2463,24 +2466,41 @@ summary:focus-visible {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.75;
-  font-size: 16px;
+  font-size: 18px;
 }
 .conversation .chat-message p {
   color: var(--text);
 }
 .project-conversation .chat-message.user > p {
   width: fit-content;
-  max-width: min(80%, 460px);
+  max-width: min(80%, 520px);
   padding: 14px 18px;
   border-radius: 20px;
   background: var(--chat-bubble);
   margin: 0 0 14px auto;
 }
 .chat-composer-wrap {
+  position: relative;
+  isolation: isolate;
+  z-index: 2;
   width: 100%;
-  max-width: 688px;
+  max-width: calc(var(--chat-reading-width) + 48px);
   margin: 0 auto;
   padding: 0 24px 18px;
+}
+/* Messages soften into the composer; this layer never intercepts chat controls. */
+.chat-composer-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -64px 0 auto;
+  height: 64px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--chat-bg) 90%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  mask-image: linear-gradient(to bottom, transparent, #000 75%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 75%);
 }
 .project-composer.chat-composer {
   margin: 0;
@@ -2490,7 +2510,7 @@ summary:focus-visible {
 .chat-composer textarea {
   height: 52px;
   min-height: 52px;
-  font-size: 14px;
+  font-size: 16px;
 }
 .chat-composer-note {
   display: block;
@@ -2727,7 +2747,7 @@ summary:focus-visible {
 }
 .assistant-response {
   color: var(--text);
-  font-size: 16px;
+  font-size: 18px;
   line-height: 1.85;
   overflow-wrap: anywhere;
 }
@@ -2742,7 +2762,7 @@ summary:focus-visible {
   margin: 0 0 16px;
 }
 .assistant-response :is(h1, h2, h3, h4) {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 1.65;
   letter-spacing: 0;
@@ -2866,7 +2886,7 @@ summary:focus-visible {
   grid-template-columns: minmax(0, var(--chat-width)) 8px minmax(0, 1fr);
 }
 .with-preview .project-conversation {
-  padding: 26px 28px;
+  padding: 26px 24px 80px;
 }
 .chat-preview {
   min-width: 0;
@@ -3002,7 +3022,7 @@ summary:focus-visible {
     grid-template-columns: minmax(0, var(--chat-width)) 8px minmax(0, 1fr);
   }
   .with-preview .project-conversation {
-    padding: 20px;
+    padding: 20px 16px 80px;
   }
   .with-preview .chat-composer-wrap {
     padding: 0 16px 16px;
@@ -3030,7 +3050,7 @@ summary:focus-visible {
     margin: 0;
   }
   .project-conversation {
-    padding: 24px 18px;
+    padding: 24px 18px 80px;
   }
   .chat-composer-wrap {
     padding: 0 12px 14px;
@@ -3293,7 +3313,7 @@ summary:focus-visible {
 /* The existing recorder owns microphone access; the beam uses its live RMS meter. */
 .voice-composer {
   min-width: 0;
-  max-width: 720px;
+  max-width: 736px;
   margin-inline: auto;
   flex-shrink: 0;
 }

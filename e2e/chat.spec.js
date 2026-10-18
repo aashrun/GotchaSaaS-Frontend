@@ -656,7 +656,7 @@ test('chat uses compact unlabelled user bubbles, neutral gray themes and translu
       'color',
       theme === 'dark' ? 'rgb(245, 245, 245)' : 'rgb(19, 19, 22)',
     );
-    expect((await bubble.boundingBox()).width).toBeLessThanOrEqual(460);
+    expect((await bubble.boundingBox()).width).toBeLessThanOrEqual(520);
     await expect(page.locator('.credit-box')).toHaveCSS('border-width', '0px');
     await expect(page.locator('.chat-composer')).toHaveCSS('border-width', '0px');
     await expect(page.locator('.chat-composer')).toHaveCSS('backdrop-filter', /blur\(24px\)/);
