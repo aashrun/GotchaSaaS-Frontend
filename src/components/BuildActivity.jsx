@@ -129,10 +129,10 @@ export function CompletionReport({ job }) {
   const report = job.result?.report;
   if (!report) return null;
   const sections = [
-    ['What’s built', report.built, 'No feature breakdown was recorded.'],
-    ['Left out', report.excluded, 'No exclusions were recorded for this run.'],
-    ['The approach', report.approach, 'No approach notes were recorded.'],
-  ];
+    ['What’s built', report.built],
+    ['Left out', report.excluded],
+    ['The approach', report.approach],
+  ].filter(([, items]) => items?.length);
   return (
     <section className="build-report" aria-label="Build summary">
       <div className="build-report-heading">
@@ -140,18 +140,14 @@ export function CompletionReport({ job }) {
         <strong>{job.result?.changes?.files === 0 ? 'What I found' : 'What changed'}</strong>
       </div>
       <div className="build-report-grid">
-        {sections.map(([title, items, fallback]) => (
+        {sections.map(([title, items]) => (
           <div key={title}>
             <h3>{title}</h3>
-            {items?.length ? (
-              <ul>
-                {items.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>{fallback}</p>
-            )}
+            <ul>
+              {items.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
           </div>
         ))}
       </div>
