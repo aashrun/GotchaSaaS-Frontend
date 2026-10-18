@@ -471,6 +471,11 @@ test('sending an idea queues one bounded build and opens the verified mini-brows
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const frame = page.frameLocator('iframe[title="Your app preview"]');
   await expect(frame.getByRole('heading', { name: 'Your appointment planner' })).toBeVisible();
+  await page
+    .locator('.chat-preview')
+    .evaluate((element) =>
+      Promise.all(element.getAnimations().map((animation) => animation.finished.catch(() => {}))),
+    );
   await frame.getByRole('button', { name: 'Try preview' }).click();
   await expect(frame.getByRole('button', { name: 'Saved' })).toBeVisible();
   await expect(page.locator('iframe')).toHaveAttribute('sandbox', 'allow-scripts allow-forms');
@@ -479,6 +484,7 @@ test('sending an idea queues one bounded build and opens the verified mini-brows
   );
   expect(fixture.stats()).toEqual({ submissions: 1, answered: false });
   await expect(page.locator('.chat-routing-label')).toHaveCount(0);
+  await expect(page.locator('.chat-composer-note')).toHaveCount(0);
   await expect(page.getByLabel('App preview address')).toHaveValue(
     /\/v1\/projects\/[^/]+\/preview\/document$/,
   );

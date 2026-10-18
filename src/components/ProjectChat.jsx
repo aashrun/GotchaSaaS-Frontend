@@ -764,10 +764,6 @@ export default function ProjectChat({ id }) {
               </div>
             </div>
           </form>
-          <small className="chat-composer-note">
-            Ask a question or request a change. Follow-ups can be queued while your app is being
-            built.
-          </small>
         </div>
       </section>
       {preview && (
