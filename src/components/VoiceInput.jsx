@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Mic, X, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
+import { useVoiceFeedback } from './VoiceComposer';
 export function encodeWav(chunks, rate) {
   const source = new Float32Array(chunks.reduce((n, c) => n + c.length, 0));
   let offset = 0;
@@ -39,18 +40,22 @@ export function encodeWav(chunks, rate) {
   return buffer;
 }
 export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
+  const visual = useVoiceFeedback();
   const [state, setState] = useState('idle'),
-    [seconds, setSeconds] = useState(0),
-    [bars, setBars] = useState(Array(18).fill(3));
+    [seconds, setSeconds] = useState(0);
   const recording = useRef(null),
     mounted = useRef(true),
     request = useRef(null),
     pending = useRef(false),
     callback = useRef({ onTranscript, onBusy });
-  callback.current = { onTranscript, onBusy };
+  callback.current = { onTranscript, onBusy, visual };
+  useEffect(() => {
+    visual?.setPhase(state);
+  }, [state, visual?.setPhase]);
   function release() {
     const r = recording.current;
     recording.current = null;
+    if (callback.current.visual) callback.current.visual.level.current = 0;
     if (!r) return;
     clearInterval(r.timer);
     cancelAnimationFrame(r.animation);
@@ -68,6 +73,7 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
       request.current?.abort();
       release();
       callback.current.onBusy?.(false);
+      callback.current.visual?.setPhase('idle');
     };
   }, []);
   async function stop(cancel = false) {
@@ -144,11 +150,17 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
           r.samples += e.data.length;
         }
       };
+      const samples = new Float32Array(analyser.fftSize);
       const waveform = () => {
         if (recording.current !== r) return;
-        const values = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(values);
-        setBars(Array.from({ length: 18 }, (_, i) => Math.max(3, values[i * 3] / 8)));
+        analyser.getFloatTimeDomainData(samples);
+        let power = 0;
+        for (const sample of samples) power += sample * sample;
+        if (callback.current.visual)
+          callback.current.visual.level.current = Math.min(
+            1,
+            Math.sqrt(power / samples.length) * 4,
+          );
         r.animation = requestAnimationFrame(waveform);
       };
       waveform();
@@ -193,7 +205,6 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
         aria-label={state === 'starting' ? 'Connecting microphone' : 'Adding voice input'}
       >
         <Mic size={17} />
-        <i aria-hidden="true" />
       </button>
     );
   return (
@@ -206,11 +217,7 @@ export default function VoiceInput({ onTranscript, onBusy, disabled = false }) {
       >
         <X size={16} />
       </button>
-      <div className="voice-waveform" aria-hidden="true">
-        {bars.map((height, i) => (
-          <i key={i} style={{ height }} />
-        ))}
-      </div>
+      <span className="voice-listening">Listening</span>
       <span className="voice-time">
         {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
       </span>

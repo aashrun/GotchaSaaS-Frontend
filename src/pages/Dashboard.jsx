@@ -19,6 +19,8 @@ import { useData, Modal, ErrorState, Skeleton } from '../components/Common';
 import api from '../lib/api';
 import { submitPromptOnEnter } from '../lib/promptKeyboard';
 import VoiceInput from '../components/VoiceInput';
+import VoiceComposer from '../components/VoiceComposer';
+import GrowingTextarea from '../components/GrowingTextarea';
 import PromptReferences, { ReferenceChips } from '../components/PromptReferences';
 import { useAuth } from '../auth/AuthProvider';
 import { nextGreeting } from '../lib/greetings';
@@ -149,8 +151,8 @@ function ProjectHome({ library }) {
       {!library && (
         <section className="project-start">
           <h1>{greeting}</h1>
-          <form className="project-composer" onSubmit={create}>
-            <textarea
+          <VoiceComposer className="project-composer" onSubmit={create}>
+            <GrowingTextarea
               ref={composer}
               aria-label="Describe your app idea"
               placeholder="Build a customer portal for my agency…"
@@ -234,7 +236,7 @@ function ProjectHome({ library }) {
                 {busy ? <Loader2 size={18} className="voice-spinner" /> : <ArrowUp size={19} />}
               </button>
             </div>
-          </form>
+          </VoiceComposer>
         </section>
       )}
       {library && (

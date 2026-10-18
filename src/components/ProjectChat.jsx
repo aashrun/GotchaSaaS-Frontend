@@ -19,6 +19,9 @@ import api from '../lib/api';
 import { useAuth } from '../auth/AuthProvider';
 import { useData, ErrorState, Modal } from './Common';
 import VoiceInput from './VoiceInput';
+import VoiceComposer from './VoiceComposer';
+import GrowingTextarea from './GrowingTextarea';
+import ActivityIndicator from './ActivityIndicator';
 import PromptReferences, { ReferenceChips } from './PromptReferences';
 import BuildActivity from './BuildActivity';
 import OpeningProject from './OpeningProject';
@@ -271,7 +274,7 @@ export default function ProjectChat({ id }) {
   }, [active?.id, active?.state === 'paused']);
   useEffect(() => {
     bottom.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [data?.messages.length, active?.id]);
+  }, [data?.messages.length, active?.id, optimistic?.id]);
   const liveUpdates = active ? events[active.id]?.length || 0 : 0;
   useEffect(() => {
     if (followBuild.current && liveUpdates)
@@ -366,6 +369,7 @@ export default function ProjectChat({ id }) {
       id: priorMessage?.id || attempt.current.id,
       role: 'user',
       content: prompt,
+      delivery: 'accepting',
     };
     setOptimistic(submittedMessage);
     setDraft('');
@@ -399,6 +403,7 @@ export default function ProjectChat({ id }) {
         ...submittedMessage,
         id: accepted.turn.id,
         jobId: accepted.turn.jobId,
+        delivery: accepted.turn.state,
       };
       setOptimistic(queuedMessage);
       setData((current) => ({
@@ -416,6 +421,7 @@ export default function ProjectChat({ id }) {
       reload();
       refreshNavigation().catch(() => {});
     } catch (e) {
+      setOptimistic((current) => (current ? { ...current, delivery: 'failed' } : current));
       setNotice(e.message);
     } finally {
       submitting.current = false;
@@ -465,6 +471,14 @@ export default function ProjectChat({ id }) {
     )
       ? [...data.messages, optimistic]
       : data.messages;
+  const pendingFeedback = (message) => {
+    if (message.role !== 'user' || message.jobId || !user.emailVerified) return null;
+    const state =
+      data.turns?.find((t) => t.id === message.id)?.state ||
+      (optimistic?.id === message.id ? optimistic.delivery : null);
+    if (active && state !== 'accepting') return null; // Accepted follow-ups use the queue UI.
+    return { accepting: 'connecting', pending: 'pending', processing: 'thinking' }[state] || null;
+  };
   return (
     <main
       ref={split}
@@ -537,6 +551,9 @@ export default function ProjectChat({ id }) {
                     (q) => q.jobId === message.jobId && q.state === 'answered',
                   )}
                 />
+              )}
+              {pendingFeedback(message) && (
+                <ActivityIndicator className="assistant-pending" phase={pendingFeedback(message)} />
               )}
             </Fragment>
           ))}
@@ -695,8 +712,8 @@ export default function ProjectChat({ id }) {
                 ))}
             </div>
           )}
-          <form className="project-composer chat-composer" onSubmit={send}>
-            <textarea
+          <VoiceComposer className="project-composer chat-composer" onSubmit={send}>
+            <GrowingTextarea
               aria-label="Ask Gotcha to build or edit your app"
               placeholder={
                 active
@@ -720,7 +737,9 @@ export default function ProjectChat({ id }) {
                 <VoiceInput
                   disabled={busy || !canEdit}
                   onBusy={setVoiceBusy}
-                  onTranscript={(text) => setDraft((value) => (value ? value + '\n' : '') + text)}
+                  onTranscript={(text) =>
+                    setDraft((value) => ((value ? value + '\n' : '') + text).slice(0, 12000))
+                  }
                 />
                 {active && (
                   <button
@@ -763,7 +782,7 @@ export default function ProjectChat({ id }) {
                 </button>
               </div>
             </div>
-          </form>
+          </VoiceComposer>
         </div>
       </section>
       {preview && (

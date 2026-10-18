@@ -1,3 +1,4 @@
+import ActivityIndicator from './ActivityIndicator';
 export default function OpeningProject({
   prompt,
   message = 'Opening your workspace…',
@@ -15,10 +16,7 @@ export default function OpeningProject({
               <p>{prompt}</p>
             </div>
           )}
-          <div className="agent-working" role="status">
-            <i />
-            <span>{message}</span>
-          </div>
+          <ActivityIndicator phase="connecting" label={message} />
         </div>
       </section>
     </main>

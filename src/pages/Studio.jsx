@@ -41,6 +41,8 @@ import {
 import { toast } from 'sonner';
 import api from '../lib/api';
 import VoiceInput from '../components/VoiceInput';
+import VoiceComposer from '../components/VoiceComposer';
+import GrowingTextarea from '../components/GrowingTextarea';
 import PromptReferences, { ReferenceChips } from '../components/PromptReferences';
 import AgentTools from '../components/AgentTools';
 import { useAuth } from '../auth/AuthProvider';
@@ -614,8 +616,8 @@ export default function Studio() {
                 </div>
               )}
             </div>
-            <form className="studio-composer" onSubmit={estimateJob}>
-              <textarea
+            <VoiceComposer className="studio-composer" onSubmit={estimateJob}>
+              <GrowingTextarea
                 aria-label="Ask Gotcha to build or edit your app"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
@@ -672,7 +674,7 @@ export default function Studio() {
                   <ArrowUp size={18} />
                 </button>
               </div>
-            </form>
+            </VoiceComposer>
             <div className="composer-footnote">
               <ShieldCheck size={12} />
               Credit estimate shown before generation

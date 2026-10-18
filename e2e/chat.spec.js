@@ -466,8 +466,12 @@ test('sending an idea queues one bounded build and opens the verified mini-brows
   await expect(page).toHaveURL(/\/projects\?chat=/);
   await expect(page.locator('.sidebar')).toBeVisible();
   await expect(page.locator('.chat-message.user')).toContainText(fixture.idea);
-  await expect(page.locator('.agent-working')).toBeVisible();
-  await expect(page.locator('.agent-working > i')).toHaveCSS('animation-name', 'agent-pulse');
+  await expect(page.locator('.build-live-status.activity-indicator')).toBeVisible();
+  await expect(page.locator('.build-live-status canvas')).toBeVisible();
+  await expect(page.locator('.build-live-status .activity-shimmer')).toHaveCSS(
+    'animation-name',
+    'activity-light-sweep',
+  );
   await expect(page.getByRole('dialog')).toHaveCount(0);
   const frame = page.frameLocator('iframe[title="Your app preview"]');
   await expect(frame.getByRole('heading', { name: 'Your appointment planner' })).toBeVisible();
@@ -563,8 +567,9 @@ for (const blocking of [true, false])
       });
       await page.getByRole('button', { name: 'Close dialog' }).click();
       await expect(page.locator('.chat-question-chip')).toBeVisible();
-      if (!blocking) await expect(page.locator('.agent-working')).toBeVisible();
-      else await expect(page.locator('.agent-working')).toHaveCount(0);
+      if (!blocking)
+        await expect(page.locator('.build-live-status.activity-indicator')).toBeVisible();
+      else await expect(page.locator('.build-live-status.activity-indicator')).toHaveCount(0);
       await expect(page.locator('iframe')).not.toBeVisible();
       await page.locator('.chat-question-chip').click();
       await modal.getByRole('button', { name: 'Subscriptions', exact: true }).click();
@@ -871,6 +876,8 @@ test('follow-ups can be queued, survive reload, and sent now or removed without 
   await prompt.fill('Use a simpler layout instead');
   await page.getByRole('button', { name: 'Interrupt & send', exact: true }).click();
   expect(body.mode).toBe('interrupt');
+  // Let outstanding mocked project reads finish before account cleanup removes the project.
+  await page.unrouteAll({ behavior: 'wait' });
 });
 
 test('a conversational reply appears without any build activity or preview', async ({ page }) => {
@@ -907,4 +914,143 @@ test('a conversational reply appears without any build activity or preview', asy
   );
   await expect(page.locator('.chat-job-activity')).toHaveCount(0);
   await expect(page.locator('iframe')).toHaveCount(0);
+});
+
+async function openEmptyChat(page) {
+  await register(page);
+  const me = await (await page.request.get('/v1/auth/me')).json();
+  const response = await page.request.post('/v1/projects', {
+    headers: { origin, 'x-csrf-token': me.csrfToken },
+    data: { name: 'Composer feedback test', template: 'blank' },
+  });
+  expect(response.ok()).toBe(true);
+  const { project } = await response.json();
+  await page.goto('/projects?chat=' + project.id);
+  await expect(page.getByLabel('Ask Gotcha to build or edit your app')).toBeVisible();
+  return project.id;
+}
+
+test('message feedback is immediate before a slow API, follows intent processing, and stops for an answer', async ({
+  page,
+}) => {
+  const projectId = await openEmptyChat(page);
+  const prompt = 'Explain what my app can do without making changes';
+  let release,
+    turnId,
+    phase = 'accepting',
+    submissions = 0;
+  const gate = new Promise((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/v1/ai/turns', async (route) => {
+    submissions++;
+    turnId = route.request().postDataJSON().idempotencyKey;
+    await gate;
+    phase = 'pending';
+    await route.fulfill({
+      status: 202,
+      json: { turn: { id: turnId, projectId, prompt, state: phase } },
+    });
+  });
+  await page.route('**/v1/ai/turns?*', async (route) => {
+    if (phase === 'pending') phase = 'processing';
+    await route.fulfill({ json: { turns: [{ id: turnId, projectId, prompt, state: phase }] } });
+  });
+  await page.route('**/v1/projects/' + projectId, async (route) => {
+    const response = await route.fetch(),
+      data = await response.json();
+    data.turns = [{ id: turnId, projectId, prompt, state: phase }];
+    data.messages = [{ id: turnId, role: 'user', content: prompt }];
+    if (phase === 'answered')
+      data.messages.push({
+        id: randomUUID(),
+        role: 'assistant',
+        content: 'Your app is a saved blank project. No changes were made.',
+      });
+    await route.fulfill({ json: data });
+  });
+  await page.getByLabel('Ask Gotcha to build or edit your app').fill(prompt);
+  await page.getByRole('button', { name: 'Send prompt', exact: true }).click();
+  const feedback = page.locator('.assistant-pending');
+  // The response is held indefinitely: this must not depend on an API response or timer.
+  await expect(feedback).toContainText('Connecting', { timeout: 1000 });
+  await expect(feedback.locator('canvas')).toBeVisible();
+  await expect(page.locator('.chat-message.user').last()).toContainText(prompt);
+  await expect(page.getByText('Sending your request', { exact: false })).toHaveCount(0);
+  await page.screenshot({ path: '.local/orb-immediate-feedback-dark.png' });
+  release();
+  await expect(feedback).toContainText('Thinking');
+  await expect(feedback.locator('.activity-shimmer')).toHaveCSS(
+    'animation-name',
+    'activity-light-sweep',
+  );
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await page.screenshot({ path: '.local/orb-thinking-light.png' });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(feedback.locator('.activity-shimmer')).toHaveCSS('animation-name', 'none');
+  phase = 'answered';
+  await expect(page.locator('.assistant-response')).toContainText('No changes were made.');
+  await expect(feedback).toHaveCount(0);
+  await expect(page.locator('.chat-job-activity')).toHaveCount(0);
+  expect(submissions).toBe(1);
+});
+
+test('a rejected send stops its immediate activity and keeps the error and user message', async ({
+  page,
+}) => {
+  await openEmptyChat(page);
+  await page.route('**/v1/ai/turns', (route) =>
+    route.fulfill({
+      status: 503,
+      json: { error: { message: 'Temporarily unavailable. Try again.' } },
+    }),
+  );
+  const prompt = 'Add a customer directory';
+  await page.getByLabel('Ask Gotcha to build or edit your app').fill(prompt);
+  await page.getByRole('button', { name: 'Send prompt', exact: true }).click();
+  await expect(page.locator('.chat-notice')).toContainText('Temporarily unavailable');
+  await expect(page.locator('.assistant-pending')).toHaveCount(0);
+  await expect(page.locator('.chat-message.user')).toContainText(prompt);
+  await expect(page.getByRole('button', { name: 'Retry this build' })).toBeVisible();
+});
+
+test('home and chat prompts expand for long text, cap their height and shrink after clearing', async ({
+  page,
+}) => {
+  await register(page);
+  const home = page.getByLabel('Describe your app idea');
+  const start = (await home.boundingBox()).height;
+  const long = Array.from(
+    { length: 35 },
+    (_, i) => `Requirement ${i + 1}: Keep this useful detail visible while I write.`,
+  ).join('\n');
+  await home.fill(long);
+  await expect.poll(async () => (await home.boundingBox()).height).toBeGreaterThan(start + 100);
+  await expect(home).toHaveCSS('overflow-y', 'auto');
+  expect((await home.boundingBox()).height).toBeLessThanOrEqual(361);
+  await page.screenshot({ path: '.local/growing-prompt-home.png' });
+  await home.fill('A short idea');
+  await expect.poll(async () => (await home.boundingBox()).height).toBe(start);
+  const me = await (await page.request.get('/v1/auth/me')).json();
+  const { project } = await (
+    await page.request.post('/v1/projects', {
+      headers: { origin, 'x-csrf-token': me.csrfToken },
+      data: { name: 'Growing composer', template: 'blank' },
+    })
+  ).json();
+  await page.goto('/projects?chat=' + project.id);
+  const input = page.getByLabel('Ask Gotcha to build or edit your app');
+  const conversation = page.locator('.project-conversation');
+  const before = (await conversation.boundingBox()).height;
+  await input.fill(long);
+  await expect.poll(async () => (await input.boundingBox()).height).toBeGreaterThan(200);
+  expect((await conversation.boundingBox()).height).toBeLessThan(before - 100);
+  await input.press('Shift+Enter');
+  await expect(input).toHaveValue(long + '\n');
+  await page.screenshot({ path: '.local/growing-prompt-chat.png' });
+  await page.setViewportSize({ width: 390, height: 760 });
+  await expect.poll(async () => (await input.boundingBox()).height).toBeLessThanOrEqual(289);
+  await expect(page.getByRole('button', { name: 'Send prompt', exact: true })).toBeInViewport();
+  await input.fill('Short');
+  await expect.poll(async () => (await input.boundingBox()).height).toBeLessThan(80);
 });

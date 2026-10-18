@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ActivityIndicator, { buildPhase } from './ActivityIndicator';
 import {
   BookOpen,
   Check,
@@ -258,22 +259,20 @@ export default function BuildActivity({ job, events, answers = [] }) {
             </li>
           ))}
         </ol>
-        <div
-          className={running ? 'agent-working build-live-status' : 'agent-status build-live-status'}
-          role="status"
-        >
-          {running ? (
-            <i />
-          ) : job.state === 'completed' ? (
-            <Check size={14} aria-hidden="true" />
-          ) : job.state === 'failed' ? (
-            <CircleAlert size={14} aria-hidden="true" />
-          ) : null}
-          <span>{running && blocks.length ? 'Working' : status}</span>
-          {running && lastUpdate && (
-            <small className="build-last-update">Last update {lastUpdate}</small>
-          )}
-        </div>
+        {running ? (
+          <ActivityIndicator phase={buildPhase(job, latest)} className="build-live-status">
+            {lastUpdate && <small className="build-last-update">Last update {lastUpdate}</small>}
+          </ActivityIndicator>
+        ) : (
+          <div className="agent-status build-live-status" role="status">
+            {job.state === 'completed' ? (
+              <Check size={14} aria-hidden="true" />
+            ) : job.state === 'failed' ? (
+              <CircleAlert size={14} aria-hidden="true" />
+            ) : null}
+            <span>{status}</span>
+          </div>
+        )}
       </details>
       {job.state === 'failed' && (
         <p className="build-failure" role="alert">

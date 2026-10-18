@@ -1589,21 +1589,6 @@ summary:focus-visible {
   border: 0;
   background: transparent;
 }
-.voice-waveform {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  height: 32px;
-  width: 76px;
-}
-.voice-waveform i {
-  display: block;
-  width: 2px;
-  max-height: 30px;
-  background: currentColor;
-  border-radius: 2px;
-}
 .voice-time {
   font-variant-numeric: tabular-nums;
   font-size: 11px;
@@ -2086,9 +2071,6 @@ summary:focus-visible {
     justify-content: flex-end;
     order: 0;
     gap: 3px;
-  }
-  .project-composer-actions .voice-waveform {
-    width: 40px;
   }
   .project-composer-actions:has(.voice-recording) .composer-options {
     display: none;
@@ -2801,16 +2783,6 @@ summary:focus-visible {
 .voice-pending {
   position: relative;
 }
-.voice-pending > i {
-  position: absolute;
-  right: 3px;
-  bottom: 6px;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--text);
-  animation: agent-pulse 1.8s ease-in-out infinite;
-}
 .sidebar-search-button {
   font-size: 15px;
 }
@@ -2822,7 +2794,6 @@ summary:focus-visible {
     transition: none;
   }
 }
-.agent-working,
 .agent-status {
   display: flex;
   align-items: center;
@@ -2830,18 +2801,6 @@ summary:focus-visible {
   font-size: 12px;
   line-height: 1.6;
   color: var(--muted);
-}
-.agent-working > i {
-  display: block;
-  width: 7px;
-  height: 7px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--text);
-  animation: agent-pulse 1.8s ease-in-out infinite;
-}
-.agent-working > span {
-  animation: agent-text-pulse 1.8s ease-in-out infinite;
 }
 .chat-job-activity details {
   margin-top: 10px;
@@ -3037,23 +2996,6 @@ summary:focus-visible {
   display: block;
   margin-top: 6px;
   color: var(--muted);
-}
-@keyframes agent-pulse {
-  50% {
-    opacity: 0.35;
-    transform: scale(0.8);
-  }
-}
-@keyframes agent-text-pulse {
-  50% {
-    opacity: 0.6;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .agent-working > i,
-  .agent-working > span {
-    animation: none;
-  }
 }
 @media (max-width: 1000px) {
   .project-chat.with-preview {
@@ -3291,5 +3233,100 @@ summary:focus-visible {
   .composer-interrupt {
     max-width: 72px;
     line-height: 1.3;
+  }
+}
+
+/* Activity starts with the local message, then follows observable server phases. */
+.activity-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.activity-indicator > canvas {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+}
+.activity-shimmer {
+  width: fit-content;
+  background-image: linear-gradient(
+    100deg,
+    var(--muted) 0%,
+    var(--muted) 39%,
+    #fff 49%,
+    var(--muted) 59%,
+    var(--muted) 100%
+  );
+  background-size: 260% 100%;
+  background-position: 180% 0;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: activity-light-sweep 2.7s linear infinite;
+}
+[data-theme='light'] .activity-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    #73737b 0%,
+    #73737b 39%,
+    #151519 49%,
+    #73737b 59%,
+    #73737b 100%
+  );
+}
+.assistant-pending {
+  margin: 20px 0 26px;
+}
+.build-work-thread .activity-indicator {
+  font-size: 14px;
+}
+@keyframes activity-light-sweep {
+  to {
+    background-position: -80% 0;
+  }
+}
+
+/* The existing recorder owns microphone access; the beam uses its live RMS meter. */
+.voice-composer {
+  min-width: 0;
+  max-width: 720px;
+  margin-inline: auto;
+  flex-shrink: 0;
+}
+.chat-composer-wrap .voice-composer,
+.chat-panel .voice-composer {
+  max-width: none;
+}
+.voice-composer > .project-composer {
+  width: 100%;
+}
+.voice-listening {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.voice-recording {
+  gap: 6px;
+}
+.project-composer textarea[data-growing-prompt],
+.studio-composer textarea[data-growing-prompt] {
+  resize: none;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 35%, transparent) transparent;
+}
+@media (prefers-reduced-motion: reduce) {
+  .activity-shimmer {
+    animation: none;
+    background: none;
+    color: var(--muted);
+  }
+}
+@media (max-width: 540px) {
+  .voice-listening {
+    display: none;
   }
 }

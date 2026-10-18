@@ -34,7 +34,9 @@
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.0.0",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^2.5.5"
+    "tailwind-merge": "^2.5.5",
+    "thinking-orbs": "0.3.2",
+    "voice-glow": "0.3.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.0",

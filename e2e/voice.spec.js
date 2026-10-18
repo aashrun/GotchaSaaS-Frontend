@@ -30,7 +30,7 @@ test.use({
   },
   permissions: ['microphone'],
 });
-test('voice waveform cancels without uploading and inserts dictation in home and studio', async ({
+test('voice glow cancels without uploading and inserts dictation in home and studio', async ({
   page,
 }) => {
   let requests = 0;
@@ -40,6 +40,12 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   });
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
+  page.on('console', (message) => {
+    // AuthProvider checks the anonymous session on the registration screen (expected 401).
+    // Keep React warnings and render errors; HTTP behavior is asserted on each operation.
+    if (message.type() === 'error' && !message.text().startsWith('Failed to load resource:'))
+      errors.push(message.text());
+  });
   await page.goto('/auth/register');
   await page.getByLabel('Your first name').fill('Voice Test');
   await page.getByLabel('Email address').fill('browser-voice-' + randomUUID() + '@gotcha.test');
@@ -72,11 +78,16 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   await page.getByRole('button', { name: 'Start voice input' }).click();
   await expect(page.getByRole('group', { name: 'Voice recording' })).toBeVisible();
   await page.waitForTimeout(800);
+  await expect(page.locator('[data-voice-phase="recording"]')).toBeVisible();
+  await expect(page.locator('[data-voice-beam-band]')).toHaveCount(1);
+  await expect(page.locator('.voice-waveform')).toHaveCount(0);
   await page.screenshot({ path: '.local/voice-recording.png' });
   await page.getByRole('button', { name: 'Finish voice recording' }).click();
   await expect(page.getByRole('button', { name: 'Adding voice input' })).toBeVisible();
+  await expect(page.locator('[data-voice-phase="transcribing"]')).toBeVisible();
   await expect(page.getByText('Transcribing…', { exact: true })).toHaveCount(0);
   await expect(page.locator('.voice-recording .voice-spinner')).toHaveCount(0);
+  await page.screenshot({ path: '.local/voice-processing.png' });
   releaseTranscript();
   await expect(composer).toHaveValue('Existing idea\nBuild a customer dashboard');
   await expect(page.getByText('Dictation added', { exact: true })).toHaveCount(0);
@@ -84,10 +95,12 @@ test('voice waveform cancels without uploading and inserts dictation in home and
   await page.getByRole('button', { name: 'Create project from idea' }).click();
   await expect(page).toHaveURL(/\/projects\?chat=/);
   const studio = page.getByLabel('Ask Gotcha to build or edit your app');
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
   await studio.fill('Add a table');
   await page.getByRole('button', { name: 'Start voice input' }).click();
   await expect(page.getByRole('group', { name: 'Voice recording' })).toBeVisible();
   await page.waitForTimeout(800);
+  await page.screenshot({ path: '.local/voice-recording-light.png' });
   await page.getByRole('button', { name: 'Finish voice recording' }).click();
   await expect(studio).toHaveValue('Add a table\nBuild a customer dashboard');
   expect(requests).toBe(2);
