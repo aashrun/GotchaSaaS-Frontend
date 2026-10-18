@@ -1,12 +1,14 @@
 import Markdown from 'react-markdown';
 import { memo } from 'react';
 import { CompletionReport } from './BuildActivity';
+import { remarkCustomerTypography } from '../lib/customerTypography';
 
 // Live job polls must not reparse every previous answer in a long conversation.
 const Answer = memo(function Answer({ content }) {
   return (
     <div className="assistant-response">
       <Markdown
+        remarkPlugins={[remarkCustomerTypography]}
         skipHtml
         components={{
           a: ({ children, href }) => (

@@ -523,7 +523,7 @@ export default function Studio() {
                           }
                         }}
                       >
-                        I’ve verified — check status
+                        I’ve verified - check status
                       </button>
                       {config?.mailMode === 'local' && (
                         <Link to="/settings">Open development mailbox</Link>
@@ -903,7 +903,7 @@ export default function Studio() {
                         disabled={!canEdit || !!active}
                         title={
                           f.protected
-                            ? 'Protected — click to request unlock'
+                            ? 'Protected - click to request unlock'
                             : 'Lock against AI edits'
                         }
                         aria-label={(f.protected ? 'Unlock ' : 'Protect ') + f.path}
@@ -1302,7 +1302,7 @@ export default function Studio() {
         <div className="estimate-amount">
           <Zap size={25} />
           <strong>
-            {estimate?.min}–{estimate?.max}
+            {estimate?.min}-{estimate?.max}
           </strong>
           <span>estimated credits</span>
         </div>

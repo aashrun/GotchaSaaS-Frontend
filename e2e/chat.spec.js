@@ -352,7 +352,7 @@ test('formatted assistant replies cannot execute HTML, load images or link to ac
       result: {
         settled: true,
         summary:
-          '**Your answer**\n\n- A clear next step\n\n[Unsafe action](javascript:alert(1))\n\n![Do not load](https://example.invalid/untrusted-image.png)\n\n<script>alert(1)</script><img src="https://example.invalid/untrusted-image.png" onerror="alert(1)">',
+          '**Your answer**\n\n- A clear next step\n\nReady\u2014tested, steps 1\u20133.\n\n`keep\u2014code`\n\n[Safe\u2014link](https://example.test/app\u2014one)\n\n[Unsafe action](javascript:alert(1))\n\n![Do not load](https://example.invalid/untrusted-image.png)\n\n<script>alert(1)</script><img src="https://example.invalid/untrusted-image.png" onerror="alert(1)">',
       },
     },
     [],
@@ -361,6 +361,12 @@ test('formatted assistant replies cannot execute HTML, load images or link to ac
   const response = page.locator('.assistant-response');
   await expect(response.locator('strong')).toHaveText('Your answer');
   await expect(response.locator('li')).toHaveText('A clear next step');
+  await expect(response).toContainText('Ready-tested, steps 1-3.');
+  await expect(response.locator('code')).toHaveText('keep\u2014code');
+  await expect(response.getByRole('link', { name: 'Safe-link' })).toHaveAttribute(
+    'href',
+    'https://example.test/app%E2%80%94one',
+  );
   await expect(response.locator('img, script')).toHaveCount(0);
   expect((await response.getByText('Unsafe action').getAttribute('href')) || '').not.toContain(
     'javascript:',

@@ -1,4 +1,5 @@
 import { submitPromptOnEnter } from '../lib/promptKeyboard';
+import { customerTypography } from '../lib/customerTypography';
 import { useEffect, useRef, useState, lazy, Suspense, Fragment } from 'react';
 import { useOutletContext, useSearchParams } from 'react-router-dom';
 import {
@@ -491,7 +492,7 @@ export default function ProjectChat({ id }) {
       style={{ '--chat-width': (chatHidden ? 0 : chatWidth * 100) + '%' }}
     >
       <header className="project-chat-header">
-        <span title={project.name}>{project.name}</span>
+        <span title={project.name}>{customerTypography(project.name)}</span>
         <div>
           {preview && (
             <button
@@ -540,7 +541,7 @@ export default function ProjectChat({ id }) {
                 />
               ) : (
                 <div className={'chat-message ' + message.role}>
-                  <p>{message.content}</p>
+                  <p>{customerTypography(message.content)}</p>
                 </div>
               )}
               {message.jobId && message.role === 'user' && (
@@ -598,7 +599,7 @@ export default function ProjectChat({ id }) {
                       }
                     }}
                   >
-                    I’ve verified — check status
+                    I’ve verified - check status
                   </button>
                 </div>
               ) : (
@@ -686,7 +687,7 @@ export default function ProjectChat({ id }) {
                   <div key={t.id} className="chat-queued-message">
                     <div>
                       <small>{t.state === 'failed' ? 'Needs attention' : 'Queued'}</small>
-                      <p>{t.prompt}</p>
+                      <p>{customerTypography(t.prompt)}</p>
                       {t.error && <span>{t.error}</span>}
                     </div>
                     {t.state !== 'processing' && (
@@ -717,7 +718,7 @@ export default function ProjectChat({ id }) {
               aria-label="Ask Gotcha to build or edit your app"
               placeholder={
                 active
-                  ? 'Add a follow-up — send to queue it…'
+                  ? 'Add a follow-up - send to queue it…'
                   : 'Ask Gotcha to build, fix, or improve something…'
               }
               maxLength={12000}

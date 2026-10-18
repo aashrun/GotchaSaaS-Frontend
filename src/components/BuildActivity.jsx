@@ -82,7 +82,7 @@ function ActionRow({ events }) {
   const Icon = failed ? CircleAlert : actions[steps[0].action][0];
   const labels = steps.map((s) =>
     s.phase === 'failed'
-      ? `${actions[s.action][1]} — needs another pass`
+      ? `${actions[s.action][1]} - needs another pass`
       : actions[s.action][s.phase === 'completed' ? 2 : 1],
   );
   return (

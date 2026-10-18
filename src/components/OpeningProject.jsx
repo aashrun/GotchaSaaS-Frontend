@@ -1,4 +1,5 @@
 import ActivityIndicator from './ActivityIndicator';
+import { customerTypography } from '../lib/customerTypography';
 export default function OpeningProject({
   prompt,
   message = 'Opening your workspace…',
@@ -13,7 +14,7 @@ export default function OpeningProject({
         <div className="project-conversation">
           {prompt && (
             <div className="chat-message user">
-              <p>{prompt}</p>
+              <p>{customerTypography(prompt)}</p>
             </div>
           )}
           <ActivityIndicator phase="connecting" label={message} />

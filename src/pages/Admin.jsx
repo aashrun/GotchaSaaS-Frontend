@@ -36,7 +36,7 @@ function AdminPanel() {
         {['users', 'projects', 'jobs', 'deployments'].map((k) => (
           <div className="panel" key={k}>
             <span className="eyebrow">{k}</span>
-            <h2>{data?.[k] ?? '—'}</h2>
+            <h2>{data?.[k] ?? '-'}</h2>
           </div>
         ))}
       </div>
@@ -81,11 +81,11 @@ function AdminPanel() {
                     <tr key={r.tier}>
                       <td>{r.tier}</td>
                       <td>{r.jobs}</td>
-                      <td>{r.jobs ? Math.round((r.completed / r.jobs) * 100) + '%' : '—'}</td>
+                      <td>{r.jobs ? Math.round((r.completed / r.jobs) * 100) + '%' : '-'}</td>
                       <td>{r.avgChargedCredits.toFixed(1)}</td>
                       <td>{r.avgCalls.toFixed(1)}</td>
                       <td>{r.escalated}</td>
-                      <td>{r.triaged ? r.triageAgreed + ' / ' + r.triaged : '—'}</td>
+                      <td>{r.triaged ? r.triageAgreed + ' / ' + r.triaged : '-'}</td>
                     </tr>
                   ))}
                 </tbody>

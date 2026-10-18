@@ -132,8 +132,8 @@ export default function Billing() {
             <h3>How credits are counted</h3>
             <p>
               Before a build starts we place a temporary hold for its maximum cost. When it
-              finishes, you pay only for the work it actually did — the AI steps it took and the
-              time its private build computer ran — and the rest of the hold returns at once.
+              finishes, you pay only for the work it actually did - the AI steps it took and the
+              time its private build computer ran - and the rest of the hold returns at once.
             </p>
             <small>
               Usage is metered to a millionth of a credit. Whole credits are charged and the

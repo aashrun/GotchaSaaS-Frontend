@@ -19,6 +19,7 @@ import { useData, Modal, ErrorState, Skeleton } from '../components/Common';
 import api from '../lib/api';
 import { submitPromptOnEnter } from '../lib/promptKeyboard';
 import VoiceInput from '../components/VoiceInput';
+import { customerTypography } from '../lib/customerTypography';
 import VoiceComposer from '../components/VoiceComposer';
 import GrowingTextarea from '../components/GrowingTextarea';
 import PromptReferences, { ReferenceChips } from '../components/PromptReferences';
@@ -293,7 +294,7 @@ function ProjectHome({ library }) {
                     <span className="library-project-icon">
                       <Folder size={20} />
                     </span>
-                    <h3>{project.name}</h3>
+                    <h3>{customerTypography(project.name)}</h3>
                     <p>{project.description || 'Blank project'}</p>
                     <small>
                       {project.template || 'App'} ·{' '}

@@ -27,6 +27,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { useTheme } from '../theme/ThemeProvider';
 import { useEarthScene, EarthBackdrop } from '../EarthBackdrop';
 import api from '../../lib/api';
+import { customerTypography } from '../../lib/customerTypography';
 import { toast } from 'sonner';
 const manageRoutes = [
   ['/billing', 'Billing & usage', Zap],
@@ -257,7 +258,7 @@ export default function WorkspaceLayout() {
                     }
                     onClick={() => setOpen(false)}
                   >
-                    <span>{project.name}</span>
+                    <span>{customerTypography(project.name)}</span>
                   </Link>
                 ))}
               </nav>
@@ -317,7 +318,7 @@ export default function WorkspaceLayout() {
               <strong>
                 {data
                   ? Math.max(0, data.account.balance - data.account.reserved).toLocaleString()
-                  : '—'}
+                  : '-'}
               </strong>
             </Link>
             {data?.account.reserved > 0 && <p>{data.account.reserved} reserved</p>}
@@ -407,7 +408,7 @@ export default function WorkspaceLayout() {
               >
                 <MessageSquare size={17} />
                 <span>
-                  <strong>{project.name}</strong>
+                  <strong>{customerTypography(project.name)}</strong>
                   <small>Edited {new Date(project.updatedAt).toLocaleDateString()}</small>
                 </span>
                 <ArrowUpRight size={15} />
