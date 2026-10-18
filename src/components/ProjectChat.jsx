@@ -83,19 +83,12 @@ export default function ProjectChat({ id }) {
   const [verificationBusy, setVerificationBusy] = useState(false);
   const [planningOpen, setPlanningOpen] = useState(false),
     [planAnswer, setPlanAnswer] = useState(''),
-    [planError, setPlanError] = useState(''),
-    [resumePlan, setResumePlan] = useState(false);
+    [planError, setPlanError] = useState('');
   const planQuestion = data?.project.settings.buildPlan?.questions.find((q) => !q.answer);
   useEffect(() => {
     setPlanAnswer('');
     setPlanError('');
   }, [planQuestion?.id]);
-  useEffect(() => {
-    if (resumePlan && project && !planQuestion && !busy) {
-      setResumePlan(false);
-      send(undefined, pendingPrompt || project.description);
-    }
-  }, [resumePlan, planQuestion?.id, busy]);
   const [chatWidth, setChatWidth] = useState(() => {
     const saved = Number(localStorage.getItem('gotcha-preview-chat-width'));
     return saved >= 0.18 && saved <= 0.7 ? saved : 0.46;
@@ -125,6 +118,50 @@ export default function ProjectChat({ id }) {
   const [channel] = useState(() => crypto.randomUUID());
   const project = data?.project;
   const active = data?.jobs.find((j) => !terminal.includes(j.state));
+  const pendingTurns =
+    data?.turns?.filter((t) => ['pending', 'processing', 'waiting'].includes(t.state)) || [];
+  const pendingTurnKey = pendingTurns.map((t) => t.id).join(',');
+  useEffect(() => {
+    if (!pendingTurnKey) return;
+    let checking = false;
+    const timer = setInterval(
+      async () => {
+        if (checking) return;
+        checking = true;
+        try {
+          const { data: next } = await api.get('/ai/turns?projectId=' + id);
+          if (
+            next.turns.some(
+              (t) =>
+                ['answered', 'dispatched', 'failed', 'cancelled', 'needs_setup'].includes(
+                  t.state,
+                ) && pendingTurns.some((p) => p.id === t.id),
+            )
+          )
+            await reload();
+          else setData((current) => ({ ...current, turns: next.turns }));
+        } catch {
+          /* polling retries transient transport errors */
+        } finally {
+          checking = false;
+        }
+      },
+      active ? 5000 : 1500,
+    );
+    return () => clearInterval(timer);
+  }, [pendingTurnKey, !!active]);
+  async function changeQueued(turn, action) {
+    try {
+      await api.post('/ai/turns/' + turn.id + '/' + action);
+      await reload();
+    } catch (e) {
+      setNotice(e.message);
+    }
+  }
+  const setupTurn = data?.turns?.find((t) => t.state === 'needs_setup');
+  useEffect(() => {
+    if (setupTurn && planQuestion) setPlanningOpen(true);
+  }, [setupTurn?.id, planQuestion?.id]);
   const canEdit = ['owner', 'admin', 'editor'].includes(data?.role);
   const outstanding = questions.filter((q) => q.state === 'pending' && q.jobId === active?.id);
   const question = outstanding.find((q) => q.id === questionId);
@@ -306,18 +343,25 @@ export default function ProjectChat({ id }) {
       window.removeEventListener('message', receive);
     };
   }, [id, channel]);
-  async function send(event, intent = draft) {
+  async function send(event, intent = draft, mode = active ? 'queue' : 'auto') {
     event?.preventDefault();
     const prompt = intent.trim();
-    if (submitting.current || active || !canEdit || voiceBusy || referenceBusy || prompt.length < 5)
-      return;
+    if (submitting.current || !canEdit || voiceBusy || referenceBusy || !prompt.length) return;
     submitting.current = true;
     if (!attempt.current || attempt.current.prompt !== prompt)
       attempt.current = { id: crypto.randomUUID(), prompt };
     sessionStorage.setItem('gotcha-pending-request:' + id, JSON.stringify(attempt.current));
     const priorMessage = data.messages.find(
-      (m) => m.role === 'user' && !m.jobId && m.content === prompt,
+      (m) =>
+        m.role === 'user' &&
+        !m.jobId &&
+        m.content === prompt &&
+        !(data.turns || []).some((t) => t.id === m.id),
     );
+    if (priorMessage) {
+      attempt.current.id = priorMessage.id;
+      sessionStorage.setItem('gotcha-pending-request:' + id, JSON.stringify(attempt.current));
+    }
     const submittedMessage = {
       id: priorMessage?.id || attempt.current.id,
       role: 'user',
@@ -330,24 +374,6 @@ export default function ProjectChat({ id }) {
     setPendingPrompt(prompt);
     sessionStorage.setItem('gotcha-studio-prompt:' + id, prompt);
     try {
-      let setupQuestion = planQuestion;
-      if (
-        project.revision === 0 &&
-        project.settings.templatePristine &&
-        !project.description.trim() &&
-        !project.settings.buildPlan?.intentCaptured
-      ) {
-        const { data: prepared } = await api.post('/projects/' + id + '/build-plan/prepare', {
-          prompt,
-        });
-        await reload();
-        setupQuestion = prepared.plan.questions.find((q) => !q.answer);
-      }
-      if (setupQuestion) {
-        setPlanningOpen(true);
-        setNotice('A quick setup question before we build. Your idea is saved here.');
-        return;
-      }
       if (!user.emailVerified) {
         if (!priorMessage) {
           const saved = await api.post('/projects/' + id + '/messages', {
@@ -362,31 +388,25 @@ export default function ProjectChat({ id }) {
         setNotice('Verify your email to start this build. Your idea is saved here.');
         return;
       }
-      const { data: estimate } = await api.post('/ai/estimate', {
+      const { data: accepted } = await api.post('/ai/turns', {
         projectId: id,
-        engine: 'agent-v1',
         prompt,
         references,
-      });
-      if (!attempt.current || attempt.current.prompt !== prompt)
-        attempt.current = { id: crypto.randomUUID(), prompt };
-      const { data: accepted } = await api.post('/ai/jobs', {
-        projectId: id,
-        engine: 'agent-v1',
-        prompt,
-        references,
+        mode,
         idempotencyKey: attempt.current.id,
-        maxCredits: estimate.max,
-        ...(estimate.routingTicket ? { routingTicket: estimate.routingTicket } : {}),
       });
-      const queuedMessage = { ...submittedMessage, jobId: accepted.job.id };
+      const queuedMessage = {
+        ...submittedMessage,
+        id: accepted.turn.id,
+        jobId: accepted.turn.jobId,
+      };
       setOptimistic(queuedMessage);
       setData((current) => ({
         ...current,
-        messages: priorMessage
-          ? current.messages.map((m) => (m.id === priorMessage.id ? queuedMessage : m))
+        messages: current.messages.some((m) => m.id === queuedMessage.id)
+          ? current.messages.map((m) => (m.id === queuedMessage.id ? queuedMessage : m))
           : [...current.messages, queuedMessage],
-        jobs: [accepted.job, ...current.jobs.filter((j) => j.id !== accepted.job.id)],
+        turns: [accepted.turn, ...(current.turns || []).filter((t) => t.id !== accepted.turn.id)],
       }));
       setPendingPrompt('');
       setReferences([]);
@@ -619,12 +639,68 @@ export default function ProjectChat({ id }) {
           <div ref={bottom} />
         </div>
         <div className="chat-composer-wrap">
+          {setupTurn && (
+            <button
+              type="button"
+              className="chat-question-chip"
+              onClick={() => setPlanningOpen(true)}
+            >
+              <span>A quick setup question</span>
+              {planQuestion?.title || 'Choose how to build your app'}
+            </button>
+          )}
+          {!!data.turns?.filter(
+            (t) =>
+              t.state === 'waiting' ||
+              (active && ['pending', 'processing'].includes(t.state)) ||
+              t.state === 'failed',
+          ).length && (
+            <div className="chat-message-queue" aria-label="Queued messages">
+              {data.turns
+                .filter(
+                  (t) =>
+                    t.state === 'waiting' ||
+                    (active && ['pending', 'processing'].includes(t.state)) ||
+                    t.state === 'failed',
+                )
+                .slice()
+                .reverse()
+                .map((t) => (
+                  <div key={t.id} className="chat-queued-message">
+                    <div>
+                      <small>{t.state === 'failed' ? 'Needs attention' : 'Queued'}</small>
+                      <p>{t.prompt}</p>
+                      {t.error && <span>{t.error}</span>}
+                    </div>
+                    {t.state !== 'processing' && (
+                      <div className="chat-queue-actions">
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => changeQueued(t, 'send-now')}
+                        >
+                          {t.state === 'failed' ? 'Retry message' : 'Send now'}
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-button"
+                          aria-label={'Remove queued message: ' + t.prompt}
+                          onClick={() => changeQueued(t, 'cancel')}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          )}
           <form className="project-composer chat-composer" onSubmit={send}>
             <textarea
               aria-label="Ask Gotcha to build or edit your app"
               placeholder={
                 active
-                  ? 'Your next idea can wait here…'
+                  ? 'Add a follow-up — send to queue it…'
                   : 'Ask Gotcha to build, fix, or improve something…'
               }
               maxLength={12000}
@@ -632,17 +708,13 @@ export default function ProjectChat({ id }) {
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={submitPromptOnEnter}
             />
-            <ReferenceChips
-              references={references}
-              onChange={setReferences}
-              disabled={busy || !!active}
-            />
+            <ReferenceChips references={references} onChange={setReferences} disabled={busy} />
             <div className="project-composer-actions">
               <PromptReferences
                 references={references}
                 onChange={setReferences}
                 onBusy={setReferenceBusy}
-                disabled={busy || !!active || !canEdit}
+                disabled={busy || !canEdit}
               />
               <div className="composer-send-tools">
                 <VoiceInput
@@ -650,10 +722,10 @@ export default function ProjectChat({ id }) {
                   onBusy={setVoiceBusy}
                   onTranscript={(text) => setDraft((value) => (value ? value + '\n' : '') + text)}
                 />
-                {active ? (
+                {active && (
                   <button
                     type="button"
-                    className="composer-send"
+                    className="icon-button composer-stop"
                     aria-label="Stop building"
                     disabled={busy}
                     onClick={async () => {
@@ -670,23 +742,31 @@ export default function ProjectChat({ id }) {
                   >
                     <Square size={13} fill="currentColor" />
                   </button>
-                ) : (
+                )}
+                {active && draft.trim() && (
                   <button
-                    className="primary-button composer-send"
-                    aria-label="Send prompt"
-                    disabled={
-                      busy || voiceBusy || referenceBusy || !canEdit || draft.trim().length < 5
-                    }
+                    type="button"
+                    className="text-button composer-interrupt"
+                    disabled={busy || voiceBusy || referenceBusy || !canEdit}
+                    onClick={() => send(undefined, draft, 'interrupt')}
                   >
-                    <ArrowUp size={18} />
+                    Interrupt & send
                   </button>
                 )}
+                <button
+                  className="primary-button composer-send"
+                  aria-label={active ? 'Queue message' : 'Send prompt'}
+                  title={active ? 'Queue after this run' : 'Send message'}
+                  disabled={busy || voiceBusy || referenceBusy || !canEdit || !draft.trim()}
+                >
+                  <ArrowUp size={18} />
+                </button>
               </div>
             </div>
           </form>
           <small className="chat-composer-note">
-            Sending starts a build within your available credits. Unused reserved credits return
-            after the run.
+            Ask a question or request a change. Follow-ups can be queued while your app is being
+            built.
           </small>
         </div>
       </section>
@@ -891,7 +971,7 @@ export default function ProjectChat({ id }) {
                   answer: planAnswer.trim(),
                 });
                 await reload();
-                setResumePlan(true);
+                setPlanningOpen(false);
               } catch (error) {
                 setPlanError(error.message);
               } finally {

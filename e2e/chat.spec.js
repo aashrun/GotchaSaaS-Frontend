@@ -18,32 +18,25 @@ async function register(page) {
 async function agentFixture(page, blocking, idea = 'Build an appointment planner for my agency') {
   let phase = 'new',
     projectId,
-    estimates = 0,
     submissions = 0,
     answered = false;
   const jobId = randomUUID(),
     questionId = randomUUID();
   let jobDetails = {},
     activityEntries = null;
-  await page.route('**/v1/ai/estimate', async (route) => {
-    estimates++;
+  await page.route('**/v1/ai/turns', async (route) => {
+    submissions++;
     const data = route.request().postDataJSON();
-    expect(data.engine).toBe('agent-v1');
     expect(data.prompt).toBe(idea);
     expect(data.modelId).toBeUndefined();
     projectId = data.projectId;
-    await route.fulfill({ json: { min: 2, max: 4 } });
-  });
-  await page.route('**/v1/ai/jobs', async (route) => {
-    submissions++;
-    expect(route.request().postDataJSON()).toMatchObject({
-      projectId,
-      prompt: idea,
-      maxCredits: 4,
-      engine: 'agent-v1',
-    });
     phase = blocking === undefined ? 'queued' : blocking ? 'paused' : 'working';
-    await route.fulfill({ status: 202, json: { job: { id: jobId, state: phase } } });
+    await route.fulfill({
+      status: 202,
+      json: {
+        turn: { id: data.idempotencyKey, projectId, prompt: idea, state: 'dispatched', jobId },
+      },
+    });
   });
   await page.route(/\/v1\/projects\/[a-f0-9-]+$/, async (route) => {
     const response = await route.fetch(),
@@ -155,7 +148,7 @@ async function agentFixture(page, blocking, idea = 'Build an appointment planner
   );
   return {
     idea,
-    stats: () => ({ estimates, submissions, answered }),
+    stats: () => ({ submissions, answered }),
     setBuild(next, details, entries) {
       phase = next;
       jobDetails = details;
@@ -406,7 +399,7 @@ test('slow project creation and chat submission show the prompt immediately with
     messageWrites++;
     return route.abort();
   });
-  await page.route('**/v1/ai/estimate', async (route) => {
+  await page.route('**/v1/ai/turns', async (route) => {
     await estimateGate;
     await route.fulfill({
       status: 503,
@@ -484,7 +477,7 @@ test('sending an idea queues one bounded build and opens the verified mini-brows
   await expect(page.locator('.chat-message.assistant')).toContainText(
     'The booking flow is working.',
   );
-  expect(fixture.stats()).toEqual({ estimates: 1, submissions: 1, answered: false });
+  expect(fixture.stats()).toEqual({ submissions: 1, answered: false });
   await expect(page.locator('.chat-routing-label')).toHaveCount(0);
   await expect(page.getByLabel('App preview address')).toHaveValue(
     /\/v1\/projects\/[^/]+\/preview\/document$/,
@@ -575,7 +568,7 @@ for (const blocking of [true, false])
       await expect(
         page.frameLocator('iframe').getByRole('heading', { name: 'Your appointment planner' }),
       ).toBeVisible();
-      expect(fixture.stats()).toEqual({ estimates: 1, submissions: 1, answered: true });
+      expect(fixture.stats()).toEqual({ submissions: 1, answered: true });
     },
   );
 test('login remains static and minimal sidebar controls and light glass stay borderless', async ({
@@ -808,4 +801,104 @@ test.afterEach(async ({ page }) => {
     headers: { origin, 'x-csrf-token': me.csrfToken },
     data: { confirmation: 'DELETE MY ACCOUNT' },
   });
+});
+
+test('follow-ups can be queued, survive reload, and sent now or removed without a duplicate build', async ({
+  page,
+}) => {
+  await register(page);
+  const fixture = await agentFixture(page, null);
+  await page.getByLabel('Describe your app idea').fill(fixture.idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.locator('.chat-job-activity')).toBeVisible();
+  const url = new URL(page.url()),
+    projectId = url.searchParams.get('chat');
+  let turns = [],
+    body;
+  const runningId = randomUUID();
+  await page.route('**/v1/ai/turns', async (route) => {
+    body = route.request().postDataJSON();
+    const turn = {
+      id: body.idempotencyKey,
+      projectId,
+      prompt: body.prompt,
+      state: 'pending',
+      mode: body.mode,
+    };
+    turns = [turn, ...turns];
+    await route.fulfill({ status: 202, json: { turn } });
+  });
+  await page.route('**/v1/ai/turns?*', (route) => route.fulfill({ json: { turns } }));
+  await page.route('**/v1/projects/' + projectId, async (route) => {
+    const response = await route.fetch(),
+      data = await response.json();
+    data.jobs = [{ id: runningId, state: 'working', stage: 'Working', result: {} }];
+    data.turns = turns;
+    data.messages.push(...turns.map((t) => ({ id: t.id, role: 'user', content: t.prompt })));
+    await route.fulfill({ json: data });
+  });
+  await page.route('**/v1/ai/turns/*/*', async (route) => {
+    const action = route.request().url().split('/').at(-1);
+    const turn = turns[0];
+    turns = [
+      {
+        ...turn,
+        state: action === 'cancel' ? 'cancelled' : 'pending',
+        mode: action === 'cancel' ? turn.mode : 'interrupt',
+      },
+      ...turns.slice(1),
+    ];
+    await route.fulfill({ json: { turn: turns[0] } });
+  });
+  const prompt = page.getByLabel('Ask Gotcha to build or edit your app');
+  await prompt.fill('Add a customer filter after the current work');
+  await page.getByRole('button', { name: 'Queue message', exact: true }).click();
+  expect(body.mode).toBe('queue');
+  await expect(page.getByLabel('Queued messages')).toContainText(body.prompt);
+  await expect(page.getByText('Sending your request', { exact: false })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByLabel('Queued messages')).toContainText(body.prompt);
+  await page.getByRole('button', { name: 'Send now', exact: true }).click();
+  expect(turns[0].mode).toBe('interrupt');
+  await page.getByRole('button', { name: 'Remove queued message: ' + body.prompt }).click();
+  await expect(page.getByLabel('Queued messages')).toHaveCount(0);
+  await prompt.fill('Use a simpler layout instead');
+  await page.getByRole('button', { name: 'Interrupt & send', exact: true }).click();
+  expect(body.mode).toBe('interrupt');
+});
+
+test('a conversational reply appears without any build activity or preview', async ({ page }) => {
+  await register(page);
+  const idea = 'Did you even understand my blank-screen problem?';
+  let projectId, turnId;
+  await page.route('**/v1/ai/turns', async (route) => {
+    const body = route.request().postDataJSON();
+    projectId = body.projectId;
+    turnId = body.idempotencyKey;
+    await route.fulfill({
+      status: 202,
+      json: { turn: { id: turnId, projectId, prompt: idea, state: 'pending' } },
+    });
+  });
+  await page.route(/\/v1\/projects\/[a-f0-9-]+$/, async (route) => {
+    const response = await route.fetch(),
+      data = await response.json();
+    if (data.project.id === projectId) {
+      data.turns = [{ id: turnId, projectId, prompt: idea, state: 'answered' }];
+      data.messages.push({
+        id: randomUUID(),
+        role: 'assistant',
+        content:
+          'Yes. Story map and Edit planner go blank. You also asked how this can scale. I have not made changes.',
+      });
+    }
+    await route.fulfill({ json: data });
+  });
+  await page.getByLabel('Describe your app idea').fill(idea);
+  await page.getByRole('button', { name: 'Create project from idea' }).click();
+  await expect(page.locator('.assistant-response')).toContainText(
+    'Story map and Edit planner go blank',
+  );
+  await expect(page.locator('.chat-job-activity')).toHaveCount(0);
+  await expect(page.locator('iframe')).toHaveCount(0);
 });
