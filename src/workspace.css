@@ -2466,7 +2466,7 @@ summary:focus-visible {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.75;
-  font-size: 18px;
+  font-size: 17px;
 }
 .conversation .chat-message p {
   color: var(--text);
@@ -2747,7 +2747,7 @@ summary:focus-visible {
 }
 .assistant-response {
   color: var(--text);
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.85;
   overflow-wrap: anywhere;
 }
@@ -2762,7 +2762,7 @@ summary:focus-visible {
   margin: 0 0 16px;
 }
 .assistant-response :is(h1, h2, h3, h4) {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 600;
   line-height: 1.65;
   letter-spacing: 0;
