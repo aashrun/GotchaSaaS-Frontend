@@ -1,3 +1,4 @@
+import PublishTools from '../components/PublishTools';
 import { submitPromptOnEnter } from '../lib/promptKeyboard';
 import { useState, useEffect, lazy, Suspense, useRef } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
@@ -1142,84 +1143,7 @@ export default function Studio() {
                     )}
                   </>
                 )}
-                {tab === 'deployment' && (
-                  <>
-                    <div className="tool-title">
-                      <Globe size={23} />
-                      <h2>Ready for the world?</h2>
-                    </div>
-                    <p className="muted">
-                      Cloudflare publishing currently supports built frontend applications.
-                      Full-stack apps and custom domains are unavailable.
-                    </p>
-                    <div className="readiness-list">
-                      <div className="check-row">
-                        <span>Current sandbox build</span>
-                        <span
-                          className={
-                            'test-status ' +
-                            (p.settings.validatedRevision === p.revision ? 'passed' : 'not_tested')
-                          }
-                        >
-                          {p.settings.validatedRevision === p.revision ? 'Passed' : 'Not tested'}
-                        </span>
-                      </div>
-                      <div className="check-row">
-                        <span>Cloudflare setup</span>
-                        <span className="test-status warning">
-                          {config?.providers.find((p) => p.id === 'cloudflare')?.configured
-                            ? 'Configured · unverified'
-                            : 'Not configured'}
-                        </span>
-                      </div>
-                      <div className="check-row">
-                        <span>Application behavior</span>
-                        <span className="test-status not_tested">Not verified</span>
-                      </div>
-                    </div>
-                    <button
-                      className="primary-button"
-                      disabled={!canEdit || !!active}
-                      onClick={() =>
-                        setResourceModal({ kind: 'deployment', provider: 'cloudflare' })
-                      }
-                    >
-                      Review publication
-                      <ArrowUpRight size={16} />
-                    </button>
-                    {data.deployments.map((d) => (
-                      <div className="panel" key={d.id}>
-                        <span className="capability-badge">{d.status}</span>
-                        {d.url && (
-                          <a className="text-link" href={d.url} target="_blank" rel="noreferrer">
-                            Open public URL
-                            <ArrowUpRight size={14} />
-                          </a>
-                        )}
-                        <p>{d.logs}</p>
-                        {canEdit && d.status !== 'unpublished' && (
-                          <button
-                            className="text-button danger-text"
-                            onClick={() => setCleanup({ kind: 'deployment', id: d.id })}
-                          >
-                            Unpublish application
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      className="text-link"
-                      onClick={async () => {
-                        await reload();
-                        const { data } = await api.get('/resources/' + id);
-                        setOperations(data.operations);
-                      }}
-                    >
-                      <RefreshCw size={14} />
-                      Refresh operation status
-                    </button>
-                  </>
-                )}
+                {tab === 'deployment' && <PublishTools project={p} />}
                 {tab === 'agent' && <AgentTools projectId={id} canEdit={canEdit} />}
                 {tab === 'settings' && (
                   <>
@@ -1237,7 +1161,7 @@ export default function Studio() {
                     </a>
                   </>
                 )}
-                {['database', 'deployment'].includes(tab) &&
+                {tab === 'database' &&
                   operations.map((op) => (
                     <div className="operation-log" key={op.id}>
                       <span className="capability-badge">

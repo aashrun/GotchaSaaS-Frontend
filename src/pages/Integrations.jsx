@@ -1,5 +1,6 @@
-import { Plug, Code2, Github, FileText, MessageSquare } from 'lucide-react';
+import { Plug, Code2, Github, FileText, Server } from 'lucide-react';
 import { PageHeader, useData, ErrorState, Skeleton } from '../components/Common';
+import GitHubConnection from '../components/GitHubConnection';
 export default function Integrations() {
   const { data, error, loading, reload } = useData('/config');
   return (
@@ -8,16 +9,26 @@ export default function Integrations() {
       <section className="connector-roadmap">
         <h2>Your tools, on your terms.</h2>
         <p>
-          Connect a repository inside a project’s Memory & actions panel. More account connections
-          are planned below.
+          Connect your account here, then choose a repository inside your project’s Memory & GitHub
+          panel.
         </p>
+        {new URLSearchParams(window.location.search).get('github') === 'connected' && (
+          <p role="status">GitHub is connected. You can now select a repository in your project.</p>
+        )}
+        {new URLSearchParams(window.location.search).get('github') === 'permissions_updated' && (
+          <p role="status">Repository access updated. Select your repository inside a project.</p>
+        )}
+        {new URLSearchParams(window.location.search).get('github') === 'error' && (
+          <p role="alert">GitHub authorization did not finish. Connect again to retry.</p>
+        )}
+        <GitHubConnection />
         <div className="connector-plan-grid">
           {[
             [
               Github,
               'GitHub',
-              'Read a connected repository and prepare draft pull requests for your review. One-click GitHub sign-in is next.',
-              'Project connection',
+              'Choose your repositories, read source and review draft pull requests before publishing changes.',
+              'Account connection',
             ],
             [
               FileText,
@@ -26,10 +37,10 @@ export default function Integrations() {
               'Planned',
             ],
             [
-              MessageSquare,
-              'Slack & email',
-              'Draft updates, ask for review, then send only with your approval.',
-              'Planned',
+              Server,
+              'Northflank hosting',
+              'Publish a verified web app or PWA from the Publish panel. Review hosting costs and approve each release.',
+              data?.capabilities.publishing ? 'Available' : 'Needs configuration',
             ],
           ].map(([Icon, name, description, status]) => (
             <article key={name}>

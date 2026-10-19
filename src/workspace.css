@@ -3350,3 +3350,16 @@ summary:focus-visible {
     display: none;
   }
 }
+
+.github-connection {
+  max-width: 600px;
+  margin: 20px 0 28px;
+}
+.github-connection-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.github-connection select {
+  width: 100%;
+}

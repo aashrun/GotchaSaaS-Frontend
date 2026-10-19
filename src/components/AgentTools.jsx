@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import api from '../lib/api';
 import { useData, Modal } from './Common';
+import GitHubConnection from './GitHubConnection';
 export default function AgentTools({ projectId, canEdit }) {
   const base = '/agent/' + projectId,
     { data, reload } = useData(base + '/memory'),
@@ -10,9 +11,6 @@ export default function AgentTools({ projectId, canEdit }) {
     { data: actions, reload: reloadActions } = useData(base + '/actions');
   const [key, setKey] = useState(''),
     [value, setValue] = useState(''),
-    [owner, setOwner] = useState(''),
-    [repo, setRepo] = useState(''),
-    [token, setToken] = useState(''),
     [review, setReview] = useState(null),
     [busy, setBusy] = useState(false);
   async function perform(operation) {
@@ -120,38 +118,7 @@ export default function AgentTools({ projectId, canEdit }) {
         </p>
       ))}
       {canEdit && !connections?.connections.length && (
-        <form
-          className="form-stack"
-          onSubmit={(e) => {
-            e.preventDefault();
-            perform(async () => {
-              await api.post(base + '/connections/github', { owner, repo, token });
-              setToken('');
-            });
-          }}
-        >
-          <label>
-            Repository owner
-            <input required value={owner} onChange={(e) => setOwner(e.target.value)} />
-          </label>
-          <label>
-            Repository name
-            <input required value={repo} onChange={(e) => setRepo(e.target.value)} />
-          </label>
-          <label>
-            Fine-grained repository token
-            <input
-              required
-              type="password"
-              autoComplete="off"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-            />
-          </label>
-          <button className="secondary-button" disabled={busy}>
-            Connect repository
-          </button>
-        </form>
+        <GitHubConnection projectId={projectId} onConnected={reloadConnections} />
       )}
       {canEdit && !!connections?.connections.length && (
         <button

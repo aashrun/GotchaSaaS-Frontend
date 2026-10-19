@@ -12,6 +12,10 @@ export default defineConfig({
     port: 7011,
     strictPort: true,
     proxy: {
+      '/api/github': {
+        target: process.env.DEV_API_TARGET || 'http://127.0.0.1:7012',
+        changeOrigin: true,
+      },
       '/v1': { target: process.env.DEV_API_TARGET || 'http://127.0.0.1:7012', changeOrigin: true },
     },
   },
