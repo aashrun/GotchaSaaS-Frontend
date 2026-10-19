@@ -21,6 +21,7 @@ import { submitPromptOnEnter } from '../lib/promptKeyboard';
 import VoiceInput from '../components/VoiceInput';
 import { customerTypography } from '../lib/customerTypography';
 import VoiceComposer from '../components/VoiceComposer';
+import ComposerPopover from '../components/ComposerPopover';
 import GrowingTextarea from '../components/GrowingTextarea';
 import PromptReferences, { ReferenceChips } from '../components/PromptReferences';
 import { useAuth } from '../auth/AuthProvider';
@@ -170,56 +171,66 @@ function ProjectHome({ library }) {
                 onBusy={setReferenceBusy}
                 disabled={busy}
               />
-              <details className="composer-options">
-                <summary aria-label="Project options">
-                  <SlidersHorizontal size={15} />
-                  <span>Options</span>
-                </summary>
-                <div className="composer-options-panel">
-                  <label>
-                    Build for
-                    <select
-                      aria-label="Application type"
-                      value={target}
-                      onChange={(e) => setTarget(e.target.value)}
+              <ComposerPopover
+                label="Project options"
+                contentLabel="Project settings"
+                triggerClassName="composer-options"
+                className="composer-options-panel"
+                disabled={busy}
+                trigger={
+                  <>
+                    <SlidersHorizontal size={15} />
+                    <span>Options</span>
+                  </>
+                }
+              >
+                {({ close }) => (
+                  <>
+                    <label>
+                      Build for
+                      <select
+                        aria-label="Application type"
+                        value={target}
+                        onChange={(e) => setTarget(e.target.value)}
+                      >
+                        <option value="auto">Choose from my idea</option>
+                        <option value="web">Website / web application</option>
+                        <option value="pwa">Installable web app</option>
+                        <option value="mobile">iPhone / Android application</option>
+                        <option value="desktop">Windows / macOS / Linux application</option>
+                      </select>
+                    </label>
+                    <label>
+                      Starter
+                      <select
+                        aria-label="Project starter"
+                        value={starter}
+                        onChange={(event) => setStarter(event.target.value)}
+                      >
+                        <option value="auto">Auto starter</option>
+                        <option value="blank">Blank app</option>
+                        <option value="fullstack">App with login & database</option>
+                        <option value="crm">CRM</option>
+                        <option value="tasks">Tasks</option>
+                        <option value="portfolio">Portfolio</option>
+                        <option value="landing">Landing page</option>
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => {
+                        setNewName('');
+                        setBlank(true);
+                        close();
+                      }}
                     >
-                      <option value="auto">Choose from my idea</option>
-                      <option value="web">Website / web application</option>
-                      <option value="pwa">Installable web app</option>
-                      <option value="mobile">iPhone / Android application</option>
-                      <option value="desktop">Windows / macOS / Linux application</option>
-                    </select>
-                  </label>
-                  <label>
-                    Starter
-                    <select
-                      aria-label="Project starter"
-                      value={starter}
-                      onChange={(event) => setStarter(event.target.value)}
-                    >
-                      <option value="auto">Auto starter</option>
-                      <option value="blank">Blank app</option>
-                      <option value="fullstack">App with login & database</option>
-                      <option value="crm">CRM</option>
-                      <option value="tasks">Tasks</option>
-                      <option value="portfolio">Portfolio</option>
-                      <option value="landing">Landing page</option>
-                    </select>
-                  </label>
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={(event) => {
-                      setNewName('');
-                      setBlank(true);
-                      event.currentTarget.closest('details').open = false;
-                    }}
-                  >
-                    Start with a blank project
-                    <ArrowRight size={13} />
-                  </button>
-                </div>
-              </details>
+                      Start with a blank project
+                      <ArrowRight size={13} />
+                    </button>
+                  </>
+                )}
+              </ComposerPopover>
               <VoiceInput
                 disabled={busy}
                 onBusy={setVoiceBusy}

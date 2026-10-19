@@ -15,6 +15,49 @@ async function register(page) {
   });
   await page.reload();
 }
+async function expectPopupUsable(page, popup) {
+  await expect(popup).toBeVisible();
+  await expect(popup).toHaveCSS('border-width', '0px');
+  const trigger = page.getByRole('button', {
+    name:
+      (await popup.getAttribute('aria-label')) === 'Attachments'
+        ? 'Add files or images'
+        : 'Project options',
+    exact: true,
+  });
+  await expect
+    .poll(async () => {
+      const bounds = await popup.boundingBox();
+      const button = await trigger.boundingBox();
+      const expected = Math.max(
+        12,
+        Math.min(button.x, page.viewportSize().width - bounds.width - 12),
+      );
+      return Math.abs(bounds.x - expected);
+    })
+    .toBeLessThan(1);
+  const bounds = await popup.boundingBox();
+  const viewport = page.viewportSize();
+  expect(bounds.x).toBeGreaterThanOrEqual(0);
+  expect(bounds.y).toBeGreaterThanOrEqual(0);
+  expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width);
+  expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height);
+  // Visibility and bounding boxes alone don't detect an ancestor clipping a popup.
+  for (const control of await popup.locator('button, select').all()) {
+    await expect
+      .poll(() =>
+        control.evaluate((element) => {
+          const rect = element.getBoundingClientRect();
+          return [0.25, 0.5, 0.75].every((part) =>
+            element.contains(
+              document.elementFromPoint(rect.x + rect.width * part, rect.y + rect.height / 2),
+            ),
+          );
+        }),
+      )
+      .toBe(true);
+  }
+}
 async function agentFixture(page, blocking, idea = 'Build an appointment planner for my agency') {
   let phase = 'new',
     projectId,
@@ -690,6 +733,87 @@ test('chat uses compact unlabelled user bubbles, neutral gray themes and translu
   await page.setViewportSize({ width: 390, height: 700 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+test('project options and file actions stay clickable and dismiss in both themes', async ({
+  page,
+}) => {
+  await register(page);
+  const home = page.getByLabel('Describe your app idea');
+  const options = page.getByRole('button', { name: 'Project options', exact: true });
+  const panel = page.locator('.composer-options-panel');
+  const attach = page.getByRole('button', { name: 'Add files or images', exact: true });
+  const menu = page.locator('.reference-menu');
+  for (const theme of ['dark', 'light']) {
+    for (const [width, height] of [
+      [1440, 1000],
+      [1024, 500],
+      [390, 700],
+    ]) {
+      await page.setViewportSize({ width, height });
+      await options.click();
+      await expectPopupUsable(page, panel);
+      await page.getByLabel('Application type').selectOption('pwa');
+      await page.getByLabel('Project starter').selectOption('blank');
+      await expect(panel).toBeVisible();
+      await home.click();
+      await expect(panel).not.toBeVisible();
+      await expect(home).toBeFocused();
+      await options.click();
+      await expect(page.getByLabel('Application type')).toHaveValue('pwa');
+      await expect(page.getByLabel('Project starter')).toHaveValue('blank');
+      await attach.click();
+      await expect(panel).not.toBeVisible();
+      await expectPopupUsable(page, menu);
+      await options.click();
+      await expect(menu).not.toBeVisible();
+      await expect(panel).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(panel).not.toBeVisible();
+      await expect(options).toBeFocused();
+    }
+    if (theme === 'dark')
+      await page.getByRole('button', { name: 'Switch to light mode', exact: true }).click();
+  }
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await options.click();
+  await page.getByRole('button', { name: 'Start with a blank project' }).click();
+  await expect(page.getByRole('dialog', { name: 'Create a blank project' })).toBeVisible();
+  await expect(panel).not.toBeVisible();
+  await page.getByRole('button', { name: 'Close dialog', exact: true }).click();
+
+  for (const reference of [
+    {
+      name: 'brief.md',
+      mimeType: 'text/markdown',
+      buffer: Buffer.from('A calendar for my agency.'),
+    },
+    {
+      name: 'reference.png',
+      mimeType: 'image/png',
+      buffer: require('node:fs').readFileSync(
+        require('node:path').join(__dirname, 'fixtures/reference.png'),
+      ),
+    },
+  ]) {
+    await attach.click();
+    const chooserEvent = page.waitForEvent('filechooser');
+    await page
+      .getByRole('button', {
+        name: reference.mimeType.startsWith('image/') ? 'Add an image' : 'Add a text file',
+        exact: true,
+      })
+      .click();
+    const chooser = await chooserEvent;
+    expect(chooser.isMultiple()).toBe(true);
+    await chooser.setFiles(reference);
+    await expect(menu).not.toBeVisible();
+    await expect(page.getByLabel('Attached references')).toContainText(
+      reference.name === 'reference.png' ? 'reference.jpg' : reference.name,
+    );
+  }
+  await options.click();
+  await expectPopupUsable(page, panel);
+  await page.screenshot({ path: '.local/composer-options-light.png', animations: 'disabled' });
+});
 test('attachment menus dismiss outside and stay above the bottom chat composer in both themes', async ({
   page,
 }) => {
@@ -727,8 +851,7 @@ test('attachment menus dismiss outside and stay above the bottom chat composer i
     ]) {
       await page.setViewportSize({ width, height });
       await attach.click();
-      await expect(menu).toBeVisible();
-      await expect(menu).toHaveCSS('border-width', '0px');
+      await expectPopupUsable(page, menu);
       await expect(menu.getByRole('button', { name: 'Add a text file' })).toBeVisible();
       await expect(menu.getByRole('button', { name: 'Add an image' })).toBeVisible();
       const bounds = await menu.boundingBox();
@@ -740,7 +863,13 @@ test('attachment menus dismiss outside and stay above the bottom chat composer i
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
       await chat.click();
       await expect(menu).not.toBeVisible();
+      await expect(chat).toBeFocused();
     }
+    await chat.fill('A much longer project description.\n'.repeat(35));
+    await attach.click();
+    await expectPopupUsable(page, menu);
+    await page.keyboard.press('Escape');
+    await chat.fill('');
     await page.setViewportSize({ width: 1440, height: 1000 });
     await attach.click();
     await page.screenshot({

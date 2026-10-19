@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Plus, FileText, Image, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '../lib/api';
+import ComposerPopover from './ComposerPopover';
 
 export function ReferenceChips({ references, onChange, disabled }) {
   if (!references.length) return null;
@@ -32,28 +33,8 @@ export function ReferenceChips({ references, onChange, disabled }) {
 
 export default function PromptReferences({ references, onChange, onBusy, disabled }) {
   const picker = useRef(null),
-    menu = useRef(null),
     pending = useRef(false);
   const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    function dismissOutside(event) {
-      if (menu.current?.open && !menu.current.contains(event.target)) menu.current.open = false;
-    }
-    function dismissEscape(event) {
-      if (event.key === 'Escape' && menu.current?.open) {
-        menu.current.open = false;
-        menu.current.querySelector('summary')?.focus();
-      }
-    }
-    document.addEventListener('pointerdown', dismissOutside);
-    document.addEventListener('focusin', dismissOutside);
-    document.addEventListener('keydown', dismissEscape);
-    return () => {
-      document.removeEventListener('pointerdown', dismissOutside);
-      document.removeEventListener('focusin', dismissOutside);
-      document.removeEventListener('keydown', dismissEscape);
-    };
-  }, []);
   async function attach(event) {
     const files = [...event.target.files];
     event.target.value = '';
@@ -97,40 +78,41 @@ export default function PromptReferences({ references, onChange, onBusy, disable
       onBusy?.(false);
     }
   }
-  function choose(accept) {
+  function choose(accept, close) {
     picker.current.accept = accept;
-    menu.current.open = false;
+    close();
     picker.current.click();
   }
   return (
     <div className="reference-picker">
-      <details ref={menu}>
-        <summary
-          className="icon-button"
-          aria-label="Add files or images"
-          title="Add files or images"
-          onClick={(event) => (disabled || busy) && event.preventDefault()}
-        >
-          {busy ? <Loader2 size={18} className="voice-spinner" /> : <Plus size={20} />}
-        </summary>
-        <div className="reference-menu">
-          <button
-            type="button"
-            disabled={disabled || busy}
-            onClick={() => choose('.txt,.md,.csv,.json,.css,.js,.jsx,.ts,.tsx,.html')}
-          >
-            <FileText size={16} /> Add a text file
-          </button>
-          <button
-            type="button"
-            disabled={disabled || busy}
-            onClick={() => choose('image/png,image/jpeg,image/webp')}
-          >
-            <Image size={16} /> Add an image
-          </button>
-          <small>4 references · up to 2 images</small>
-        </div>
-      </details>
+      <ComposerPopover
+        label="Add files or images"
+        contentLabel="Attachments"
+        triggerClassName="icon-button reference-trigger"
+        className="reference-menu"
+        disabled={disabled || busy}
+        trigger={busy ? <Loader2 size={18} className="voice-spinner" /> : <Plus size={20} />}
+      >
+        {({ close }) => (
+          <>
+            <button
+              type="button"
+              disabled={disabled || busy}
+              onClick={() => choose('.txt,.md,.csv,.json,.css,.js,.jsx,.ts,.tsx,.html', close)}
+            >
+              <FileText size={16} /> Add a text file
+            </button>
+            <button
+              type="button"
+              disabled={disabled || busy}
+              onClick={() => choose('image/png,image/jpeg,image/webp', close)}
+            >
+              <Image size={16} /> Add an image
+            </button>
+            <small>4 references · up to 2 images</small>
+          </>
+        )}
+      </ComposerPopover>
       <input
         ref={picker}
         type="file"
