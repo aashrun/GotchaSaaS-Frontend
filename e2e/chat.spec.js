@@ -751,6 +751,11 @@ test('project options and file actions stay clickable and dismiss in both themes
       await page.setViewportSize({ width, height });
       await options.click();
       await expectPopupUsable(page, panel);
+      if (height >= 700) {
+        await expect(panel).toHaveAttribute('data-side', 'bottom');
+        const composer = await page.locator('.project-composer').boundingBox();
+        expect((await panel.boundingBox()).y).toBeGreaterThan(composer.y + composer.height);
+      }
       await page.getByLabel('Application type').selectOption('pwa');
       await page.getByLabel('Project starter').selectOption('blank');
       await expect(panel).toBeVisible();
@@ -763,6 +768,11 @@ test('project options and file actions stay clickable and dismiss in both themes
       await attach.click();
       await expect(panel).not.toBeVisible();
       await expectPopupUsable(page, menu);
+      if (height >= 700) {
+        await expect(menu).toHaveAttribute('data-side', 'bottom');
+        const composer = await page.locator('.project-composer').boundingBox();
+        expect((await menu.boundingBox()).y).toBeGreaterThan(composer.y + composer.height);
+      }
       await options.click();
       await expect(menu).not.toBeVisible();
       await expect(panel).toBeVisible();
@@ -852,6 +862,7 @@ test('attachment menus dismiss outside and stay above the bottom chat composer i
       await page.setViewportSize({ width, height });
       await attach.click();
       await expectPopupUsable(page, menu);
+      await expect(menu).toHaveAttribute('data-side', 'top');
       await expect(menu.getByRole('button', { name: 'Add a text file' })).toBeVisible();
       await expect(menu.getByRole('button', { name: 'Add an image' })).toBeVisible();
       const bounds = await menu.boundingBox();

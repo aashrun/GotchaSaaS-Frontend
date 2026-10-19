@@ -31,7 +31,7 @@ export function ReferenceChips({ references, onChange, disabled }) {
   );
 }
 
-export default function PromptReferences({ references, onChange, onBusy, disabled }) {
+export default function PromptReferences({ references, onChange, onBusy, disabled, side = 'top' }) {
   const picker = useRef(null),
     pending = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -90,6 +90,7 @@ export default function PromptReferences({ references, onChange, onBusy, disable
         contentLabel="Attachments"
         triggerClassName="icon-button reference-trigger"
         className="reference-menu"
+        side={side}
         disabled={disabled || busy}
         trigger={busy ? <Loader2 size={18} className="voice-spinner" /> : <Plus size={20} />}
       >

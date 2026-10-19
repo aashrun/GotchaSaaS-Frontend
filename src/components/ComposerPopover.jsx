@@ -7,6 +7,7 @@ export default function ComposerPopover({
   trigger,
   triggerClassName,
   className,
+  side = 'top',
   disabled,
   children,
 }) {
@@ -19,19 +20,21 @@ export default function ComposerPopover({
     const trigger = button.current;
     const composer = trigger?.closest('form');
     if (!composer) return;
-    const updateOffset = () =>
-      setSideOffset(
-        Math.max(
-          12,
-          trigger.getBoundingClientRect().top - composer.getBoundingClientRect().top + 12,
-        ),
-      );
+    const updateOffset = () => {
+      const buttonBounds = trigger.getBoundingClientRect();
+      const composerBounds = composer.getBoundingClientRect();
+      const clearance =
+        side === 'bottom'
+          ? composerBounds.bottom - buttonBounds.bottom
+          : buttonBounds.top - composerBounds.top;
+      setSideOffset(Math.max(12, clearance + 12));
+    };
     updateOffset();
     const observer = new ResizeObserver(updateOffset);
     observer.observe(composer);
     observer.observe(trigger);
     return () => observer.disconnect();
-  }, [open]);
+  }, [open, side]);
 
   useEffect(() => {
     if (disabled) setOpen(false);
@@ -53,7 +56,7 @@ export default function ComposerPopover({
         <Popover.Content
           className={'composer-popover ' + className}
           aria-label={contentLabel}
-          side="top"
+          side={side}
           align="start"
           sideOffset={sideOffset}
           collisionPadding={12}

@@ -166,6 +166,7 @@ function ProjectHome({ library }) {
             <ReferenceChips references={references} onChange={setReferences} disabled={busy} />
             <div className="project-composer-actions">
               <PromptReferences
+                side="bottom"
                 references={references}
                 onChange={setReferences}
                 onBusy={setReferenceBusy}
@@ -176,6 +177,7 @@ function ProjectHome({ library }) {
                 contentLabel="Project settings"
                 triggerClassName="composer-options"
                 className="composer-options-panel"
+                side="bottom"
                 disabled={busy}
                 trigger={
                   <>
